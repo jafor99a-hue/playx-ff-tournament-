@@ -76,10 +76,12 @@
         errors[error.code] || "সমস্যা হয়েছে: " + error.message;
     }
 
-    function goToDashboard() {
-      message.textContent = "সফল! Dashboard খুলছে...";
-      window.location.replace("./dashboard.html");
-    }
+   
+function goToDashboard() {
+  message.textContent = "সফল! Dashboard খুলছে...";
+  window.location.replace("./index.html");
+}
+ 
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
