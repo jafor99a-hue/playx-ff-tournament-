@@ -551,7 +551,7 @@ $("#roomForm").addEventListener("submit", async (event) => {
   if (!currentUser) return toast("আগে Admin হিসেবে Login করো।");
 
   try {
-    const token = await currentUser.getIdTokenResult();
+    const token = await currentUser.getIdTokenResult(true);
 
     if (token.claims.admin !== true) {
       return toast("তোমার Admin permission নেই।");
