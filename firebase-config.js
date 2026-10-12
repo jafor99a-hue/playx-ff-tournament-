@@ -5,7 +5,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/13.0.0/firebase
 import { getDatabase } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "API KEY",
+  apiKey: "AIzaSyDDweLEqB6C12QS67Ug5U2_s_HHgnreB5s",
   authDomain: "palyx-ff-tournament.firebaseapp.com",
   databaseURL: "https://palyx-ff-tournament-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "palyx-ff-tournament",
