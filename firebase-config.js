@@ -8,7 +8,3 @@ export const firebaseConfig = {
   appId: "1:809369357695:web:860377cae1659623815e4a",
   measurementId: "G-E0GMSK7CP9"
 };
-
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const database = getDatabase(app);
