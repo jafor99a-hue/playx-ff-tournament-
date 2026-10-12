@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlayX FF Dashboard</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="auth-box">
+    <h1>PlayX FF Tournament</h1>
+    <h2>Dashboard</h2>
+    <p id="status">Login যাচাই হচ্ছে...</p>
+    <button id="logout">Logout</button>
+  </main>
+
+  <script type="module">
+    import { auth } from "./firebase-config.js";
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const status = document.getElementById("status");
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.replace("./login.html");
+        return;
+      }
+
+      status.textContent =
+        "স্বাগতম, " + (user.displayName || user.email);
+    });
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.replace("./login.html");
+    });
+  </script>
+</body>
+</html>
