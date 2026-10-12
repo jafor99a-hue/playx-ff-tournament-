@@ -295,6 +295,7 @@ async function loadTournaments() {
     fillTournamentSelects(tournaments);
   } catch (error) {
     console.error("Tournament loading error:", error);
+    toast("Tournament Error: " + error.code);
     $("#tournamentList").innerHTML =
       '<p class="muted">Tournament লোড হয়নি। Firestore Rules পরীক্ষা করো।</p>';
   }
