@@ -1,10 +1,7 @@
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDDweLEqB6C12QS67Ug5U2_s_HHgnreB5s",
   authDomain: "palyx-ff-tournament.firebaseapp.com",
   databaseURL: "https://palyx-ff-tournament-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -16,7 +13,3 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const realtimeDb = getDatabase(app);
