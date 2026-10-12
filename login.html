@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PlayX FF - Login</title>
-  <link rel="stylesheet" href="style.css">
+  <title>PlayX FF - Login / Register</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <main class="auth-box">
@@ -13,17 +13,27 @@
     <h2>Login / Register</h2>
 
     <form id="auth-form">
-      <input id="email" type="email"
-        placeholder="Email address" required>
+      <input
+        id="email"
+        type="email"
+        placeholder="আপনার Email লিখুন"
+        autocomplete="email"
+        required
+      >
 
-      <input id="password" type="password"
+      <input
+        id="password"
+        type="password"
         placeholder="Password (কমপক্ষে ৬ অক্ষর)"
-        minlength="6" required>
+        minlength="6"
+        autocomplete="current-password"
+        required
+      >
 
       <button type="submit" id="login-btn">Login</button>
       <button type="button" id="register-btn">Register</button>
 
-      <p id="message" role="status"></p>
+      <p id="message" role="status" aria-live="polite"></p>
     </form>
   </main>
 
@@ -34,40 +44,83 @@
       createUserWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 
+    const form = document.getElementById("auth-form");
     const email = document.getElementById("email");
     const password = document.getElementById("password");
     const message = document.getElementById("message");
+    const loginBtn = document.getElementById("login-btn");
+    const registerBtn = document.getElementById("register-btn");
 
-    document.getElementById("auth-form")
-      .addEventListener("submit", async (e) => {
-        e.preventDefault();
-        message.textContent = "Login হচ্ছে...";
+    let busy = false;
 
-        try {
-          await signInWithEmailAndPassword(
-            auth, email.value.trim(), password.value
-          );
-          message.textContent = "Login সফল হয়েছে!";
-          window.location.href = "index.html";
-        } catch (error) {
-          message.textContent = "Login হয়নি: " + error.message;
-        }
-      });
+    function setBusy(value) {
+      busy = value;
+      loginBtn.disabled = value;
+      registerBtn.disabled = value;
+    }
 
-    document.getElementById("register-btn")
-      .addEventListener("click", async () => {
-        message.textContent = "অ্যাকাউন্ট তৈরি হচ্ছে...";
+    function showError(error) {
+      const errors = {
+        "auth/invalid-email": "Email ঠিকভাবে লিখুন।",
+        "auth/user-not-found": "এই Email দিয়ে অ্যাকাউন্ট পাওয়া যায়নি। আগে Register করুন।",
+        "auth/wrong-password": "Password সঠিক নয়।",
+        "auth/invalid-credential": "Email অথবা Password সঠিক নয়।",
+        "auth/email-already-in-use": "এই Email দিয়ে আগে অ্যাকাউন্ট তৈরি হয়েছে। Login করুন।",
+        "auth/weak-password": "আরও শক্তিশালী Password দিন (কমপক্ষে ৬ অক্ষর)।",
+        "auth/operation-not-allowed": "Firebase-এ Email/Password Login চালু করুন।",
+        "auth/unauthorized-domain": "Firebase-এর Authorized domains-এ ওয়েবসাইটের ডোমেইন যোগ করুন।",
+        "auth/network-request-failed": "ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
+      };
 
-        try {
-          await createUserWithEmailAndPassword(
-            auth, email.value.trim(), password.value
-          );
-          message.textContent = "Register সফল হয়েছে!";
-          window.location.href = "index.html";
-        } catch (error) {
-          message.textContent = "Register হয়নি: " + error.message;
-        }
-      });
+      message.textContent =
+        errors[error.code] || ("সমস্যা হয়েছে: " + error.message);
+    }
+
+    async function goToHome() {
+      message.textContent = "সফল হয়েছে! হোম পেজে যাচ্ছেন...";
+      window.location.replace("./index.html");
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (busy) return;
+
+      setBusy(true);
+      message.textContent = "Login হচ্ছে...";
+
+      try {
+        await signInWithEmailAndPassword(
+          auth,
+          email.value.trim(),
+          password.value
+        );
+        await goToHome();
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    });
+
+    registerBtn.addEventListener("click", async () => {
+      if (busy || !form.reportValidity()) return;
+
+      setBusy(true);
+      message.textContent = "অ্যাকাউন্ট তৈরি হচ্ছে...";
+
+      try {
+        await createUserWithEmailAndPassword(
+          auth,
+          email.value.trim(),
+          password.value
+        );
+        await goToHome();
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    });
   </script>
 </body>
 </html>
