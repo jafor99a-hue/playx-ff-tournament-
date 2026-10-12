@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlayX FF - Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="auth-box">
+    <h1>PlayX FF Tournament</h1>
+    <h2>Login / Register</h2>
+
+    <form id="auth-form">
+      <input id="email" type="email"
+        placeholder="Email address" required>
+
+      <input id="password" type="password"
+        placeholder="Password (কমপক্ষে ৬ অক্ষর)"
+        minlength="6" required>
+
+      <button type="submit" id="login-btn">Login</button>
+      <button type="button" id="register-btn">Register</button>
+
+      <p id="message" role="status"></p>
+    </form>
+  </main>
+
+  <script type="module">
+    import { auth } from "./firebase-config.js";
+    import {
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const message = document.getElementById("message");
+
+    document.getElementById("auth-form")
+      .addEventListener("submit", async (e) => {
+        e.preventDefault();
+        message.textContent = "Login হচ্ছে...";
+
+        try {
+          await signInWithEmailAndPassword(
+            auth, email.value.trim(), password.value
+          );
+          message.textContent = "Login সফল হয়েছে!";
+          window.location.href = "index.html";
+        } catch (error) {
+          message.textContent = "Login হয়নি: " + error.message;
+        }
+      });
+
+    document.getElementById("register-btn")
+      .addEventListener("click", async () => {
+        message.textContent = "অ্যাকাউন্ট তৈরি হচ্ছে...";
+
+        try {
+          await createUserWithEmailAndPassword(
+            auth, email.value.trim(), password.value
+          );
+          message.textContent = "Register সফল হয়েছে!";
+          window.location.href = "index.html";
+        } catch (error) {
+          message.textContent = "Register হয়নি: " + error.message;
+        }
+      });
+  </script>
+</body>
+</html>
