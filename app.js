@@ -1,4 +1,4 @@
-
+import { auth, db } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 
 import {
