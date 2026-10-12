@@ -1,8 +1,10 @@
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyDDweLEqB6C12QS67Ug5U2_s_HHgnreB5s",
+  apiKey: "YOUR_EXISTING_API_KEY",
   authDomain: "palyx-ff-tournament.firebaseapp.com",
   databaseURL: "https://palyx-ff-tournament-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "palyx-ff-tournament",
@@ -12,4 +14,9 @@ export const firebaseConfig = {
   measurementId: "G-E0GMSK7CP9"
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = getApps().length
+  ? getApp()
+  : initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
