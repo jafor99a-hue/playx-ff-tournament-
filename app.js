@@ -348,11 +348,12 @@ $("#joinForm").addEventListener("submit", async (event) => {
   try {
     const reference = doc(db, "registrations", registrationId);
     const existing = await getDoc(reference);
+    console.log("Registration read successful");
 
     if (existing.exists()) {
       return toast("তুমি ইতিমধ্যে এই Tournament-এ Join করেছ।");
     }
-
+    console.log("Trying to save registration");
     await setDoc(reference, {
       uid: currentUser.uid,
       tournamentId: selectedTournament,
