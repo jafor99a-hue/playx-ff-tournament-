@@ -390,9 +390,10 @@ if (!$("#adminPanel").hidden) {
   }
 }
 
-  } catch (error) {
-    console.error("Tournament join error:", error);
-    toast("Join Error: " + error.code);
+  
+} catch (error) {
+  console.error("Tournament join error:", error);
+  toast("Join Error: " + error.code + " - " + error.message);
   }
 });
 
