@@ -519,6 +519,7 @@ $("#tournamentForm").addEventListener("submit", async (event) => {
     const token = await currentUser.getIdTokenResult(true);
 
     console.log("Admin claim:", token.claims.admin);
+      toast("Admin claim: " + String(token.claims.admin));
     if (token.claims.admin !== true) {
       return toast("তোমার Admin permission নেই।");
     }
