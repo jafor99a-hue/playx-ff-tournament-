@@ -360,6 +360,8 @@ $("#joinForm").addEventListener("submit", async (event) => {
   inGameName: $("#ign").value.trim(),
   freeFireUid: $("#ffuid").value.trim()
 });
+    console.log("STEP 1: Before setDoc");
+    
     await setDoc(reference, {
       uid: currentUser.uid,
       tournamentId: selectedTournament,
@@ -369,6 +371,8 @@ $("#joinForm").addEventListener("submit", async (event) => {
       status: "registered",
       createdAt: serverTimestamp()
     });
+    
+    console.log("STEP 2: setDoc succeeded");
 
     $("#joinModal").hidden = true;
     $("#joinForm").reset();
