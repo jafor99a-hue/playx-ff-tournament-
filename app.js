@@ -400,7 +400,7 @@ if (!$("#adminPanel").hidden) {
   console.error("Tournament join error:", error);
   toast("Join Error: " + error.code + " - " + error.message);
     alert("JOIN ERROR DETAILS: " + error.message);
-  }
+  }alert("JOIN ERROR DETAILS: " + error.message);
 });
 
 // ---------- Results ----------
