@@ -373,6 +373,7 @@ $("#joinForm").addEventListener("submit", async (event) => {
     });
     
     console.log("STEP 2: setDoc succeeded");
+    alert("STEP 2 OK - Registration saved!");
 
     $("#joinModal").hidden = true;
     $("#joinForm").reset();
