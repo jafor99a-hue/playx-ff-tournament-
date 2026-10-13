@@ -354,6 +354,12 @@ $("#joinForm").addEventListener("submit", async (event) => {
       return toast("তুমি ইতিমধ্যে এই Tournament-এ Join করেছ।");
     }
     console.log("Trying to save registration");
+    console.log("Registration data:", {
+  uid: currentUser.uid,
+  tournamentId: selectedTournament,
+  inGameName: $("#ign").value.trim(),
+  freeFireUid: $("#ffuid").value.trim()
+});
     await setDoc(reference, {
       uid: currentUser.uid,
       tournamentId: selectedTournament,
