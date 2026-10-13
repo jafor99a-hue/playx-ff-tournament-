@@ -375,11 +375,21 @@ $("#joinForm").addEventListener("submit", async (event) => {
 
     toast("Tournament Join সফল হয়েছে!");
 
-    await loadRooms();
+    try {
+  await loadRooms();
+} catch (roomError) {
+  console.error("Room loading error:", roomError);
+  toast("Join হয়েছে, কিন্তু Room info লোড হয়নি।");
+}
 
-    if (!$("#adminPanel").hidden) {
-      await loadAdminData();
-    }
+if (!$("#adminPanel").hidden) {
+  try {
+    await loadAdminData();
+  } catch (adminError) {
+    console.error("Admin data loading error:", adminError);
+  }
+}
+
   } catch (error) {
     console.error("Tournament join error:", error);
     toast("Join Error: " + error.code);
