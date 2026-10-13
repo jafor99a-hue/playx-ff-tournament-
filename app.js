@@ -375,7 +375,7 @@ $("#joinForm").addEventListener("submit", async (event) => {
     }
   } catch (error) {
     console.error("Tournament join error:", error);
-    toast(friendlyError(error.code));
+    toast("Join Error: " + error.code);
   }
 });
 
