@@ -346,6 +346,10 @@ $("#joinForm").addEventListener("submit", async (event) => {
     `${currentUser.uid}_${selectedTournament}`;
 
   try {
+    let joinStep = "getDoc";
+  }
+  joinStep = "getDoc";
+const existing = await getDoc(reference);
     const reference = doc(db, "registrations", registrationId);
     const existing = await getDoc(reference);
     console.log("Registration read successful");
@@ -379,8 +383,8 @@ $("#joinForm").addEventListener("submit", async (event) => {
     $("#joinForm").reset();
 
     toast("Tournament Join সফল হয়েছে!");
-
-    try {
+  joinStep = "loadRooms";
+  try {
   await loadRooms();
 } catch (roomError) {
   console.error("Room loading error:", roomError);
@@ -399,8 +403,8 @@ if (!$("#adminPanel").hidden) {
 } catch (error) {
   console.error("Tournament join error:", error);
   toast("Join Error: " + error.code + " - " + error.message);
-    alert("JOIN ERROR DETAILS: " + error.message);
-  }alert("JOIN ERROR DETAILS: " + error.message);
+  alert("Error at: " + joinStep + "\n" + error.message);
+  }
 });
 
 // ---------- Results ----------
