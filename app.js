@@ -43,6 +43,61 @@ const $ = (selector) => document.querySelector(selector);
 
 function toast(message) {
   const el = $("#toast");
+document
+  .querySelector("#demo-payment-form")
+  ?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const message = document.querySelector(
+      "#demo-payment-message"
+    );
+
+    const user = auth.currentUser;
+    if (!user) {
+      message.textContent = "আগে লগইন করো।";
+      return;
+    }
+
+    const method = document.querySelector("#method").value;
+    const amount = Number(
+      document.querySelector("#amount").value
+    );
+    const transactionId = document
+      .querySelector("#txid").value.trim();
+
+    if (
+      !["bkash", "nagad"].includes(method) ||
+      !Number.isInteger(amount) ||
+      amount < 1 ||
+      amount > 10000 ||
+      !transactionId ||
+      transactionId.length > 80
+    ) {
+      message.textContent = "তথ্যগুলো যাচাই করে আবার দাও।";
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "demoPaymentRequests"), {
+        userId: user.uid,
+        method,
+        amount,
+        transactionId,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
+
+      message.textContent =
+        "Demo Request সংরক্ষিত হয়েছে। এটি পেমেন্টের প্রমাণ নয়।";
+
+      event.target.reset();
+    } catch (error) {
+      console.error("Demo request error:", error);
+      message.textContent =
+        "Request সংরক্ষণ হয়নি। Firestore Rules পরীক্ষা করো।";
+    }
+  });
+  
   if (!el) {
     alert(message);
     return;
