@@ -271,6 +271,7 @@ async function loadTournaments() {
           <p>🎮 ${esc(t.mode || "")} · 🗺️ ${esc(t.map || "")}</p>
           <p>🗓️ ${esc(t.startAt || "তারিখ পরে জানানো হবে")}</p>
           <p class="muted">${esc(t.status || "open")}</p>
+          <p>💰 Entry Fee: <strong>Free (৳০)</strong></p>
           <div class="card-foot">
             <div>
               <small class="muted">Prize pool</small>
