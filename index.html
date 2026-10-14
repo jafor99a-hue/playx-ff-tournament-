@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="bn">
 <head>
@@ -23,7 +24,6 @@
     <a href="#rooms">My Room</a>
     <a href="#results">Results</a>
 
-    <!-- Wallet button -->
     <a href="#demo-payment" class="btn wallet-btn">
       👛 Wallet
     </a>
@@ -156,15 +156,13 @@
     </div>
   </section>
 
-  <!-- Demo Wallet section -->
+  <!-- Demo Wallet: এটি বাস্তব পেমেন্ট ব্যবস্থা নয় -->
   <section class="section panel" id="demo-payment">
     <p class="eyebrow">DEMO WALLET</p>
     <h2>👛 My Wallet</h2>
 
     <p class="muted">
-      PLAYX FF TOURNAMENT
-পেমেন্ট সম্পন্ন করুন
-01346022330 Send Money করুন, তারপর নিজের একাউন্ট নাম্বার ও TrxID সাবমিট করুন।
+      PLAYX FF TOURNAMENT পেমেন্ট সম্পন্ন করুন 01346022330 Send Money করুন, তারপর নিজের একাউন্ট নাম্বার ও TrxID সাবমিট করুন।
     </p>
 
     <form id="demo-payment-form" class="form-grid">
@@ -184,11 +182,11 @@
       </label>
 
       <button class="btn" type="submit">Submit Demo Request</button>
-
       <p id="demo-payment-message" class="muted tiny" role="status" aria-live="polite"></p>
     </form>
   </section>
 
+  <!-- Admin Panel -->
   <section class="section panel" id="adminPanel" hidden>
     <p class="eyebrow">ADMIN ONLY</p>
     <h2>Admin Panel</h2>
@@ -233,6 +231,33 @@
         </tbody>
       </table>
     </div>
+
+    <!-- নতুন অংশ: Demo Wallet Requests -->
+    <h3>Demo Wallet Requests</h3>
+    <p class="muted">
+      পরীক্ষামূলক Request তালিকা। এখানে কোনো বাস্তব পেমেন্ট যাচাই,
+      অনুমোদন বা Wallet Balance পরিবর্তন করা হয় না।
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>User UID</th>
+            <th>Method</th>
+            <th>Amount (Demo)</th>
+            <th>Transaction ID (Demo)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="demoPaymentRequestsList">
+          <tr>
+            <td colspan="6">Request লোড করার ব্যবস্থা এখনো যুক্ত করা হয়নি।</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
 </main>
@@ -247,7 +272,7 @@
 
 <div class="modal-backdrop" id="joinModal" hidden>
   <section class="modal" role="dialog" aria-modal="true">
-    <button class="close" id="joinClose">×</button>
+    <button class="close" id="joinClose" type="button">×</button>
     <p class="eyebrow">TOURNAMENT REGISTRATION</p>
     <h2 id="joinTitle">Join Tournament</h2>
 
@@ -264,5 +289,5 @@
 
 <script type="module" src="app.js"></script>
 </body>
-                                   </html>
-
+        </html>
+        
