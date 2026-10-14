@@ -345,27 +345,20 @@ $("#joinForm").addEventListener("submit", async (event) => {
   const registrationId =
     `${currentUser.uid}_${selectedTournament}`;
 
+  let joinStep = "getDoc";
+
   try {
-    let joinStep = "getDoc";
-  }
-  joinStep = "getDoc";
-const existing = await getDoc(reference);
     const reference = doc(db, "registrations", registrationId);
+
+    joinStep = "getDoc";
     const existing = await getDoc(reference);
-    console.log("Registration read successful");
 
     if (existing.exists()) {
       return toast("তুমি ইতিমধ্যে এই Tournament-এ Join করেছ।");
     }
-    console.log("Trying to save registration");
-    console.log("Registration data:", {
-  uid: currentUser.uid,
-  tournamentId: selectedTournament,
-  inGameName: $("#ign").value.trim(),
-  freeFireUid: $("#ffuid").value.trim()
-});
-    console.log("STEP 1: Before setDoc");
-    
+
+    joinStep = "setDoc";
+
     await setDoc(reference, {
       uid: currentUser.uid,
       tournamentId: selectedTournament,
@@ -375,37 +368,39 @@ const existing = await getDoc(reference);
       status: "registered",
       createdAt: serverTimestamp()
     });
-    
-    console.log("STEP 2: setDoc succeeded");
-    alert("STEP 2 OK - Registration saved!");
 
     $("#joinModal").hidden = true;
     $("#joinForm").reset();
 
     toast("Tournament Join সফল হয়েছে!");
-  joinStep = "loadRooms";
-  try {
-  await loadRooms();
-} catch (roomError) {
-  console.error("Room loading error:", roomError);
-  toast("Join হয়েছে, কিন্তু Room info লোড হয়নি।");
-}
 
-if (!$("#adminPanel").hidden) {
-  try {
-    await loadAdminData();
-  } catch (adminError) {
-    console.error("Admin data loading error:", adminError);
-  }
-}
+    joinStep = "loadRooms";
 
-  
-} catch (error) {
-  console.error("Tournament join error:", error);
-  toast("Join Error: " + error.code + " - " + error.message);
-  alert("Error at: " + joinStep + "\n" + error.message);
+    try {
+      await loadRooms();
+    } catch (roomError) {
+      console.error("Room loading error:", roomError);
+      toast("Join হয়েছে, কিন্তু Room info লোড হয়নি।");
+    }
+
+    if (!$("#adminPanel").hidden) {
+      try {
+        await loadAdminData();
+      } catch (adminError) {
+        console.error("Admin data loading error:", adminError);
+      }
+    }
+
+  } catch (error) {
+    console.error("Tournament join error:", error);
+    alert(
+      "Error at: " + joinStep + "\n" +
+      error.code + ": " + error.message
+    );
   }
 });
+
+
 
 // ---------- Results ----------
 
