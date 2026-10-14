@@ -54,6 +54,83 @@ function toast(message) {
   setTimeout(() => el.classList.remove("show"), 4000);
 }
 
+// ---------- Demo Payment Request ----------
+
+const demoPaymentForm = $("#demo-payment-form");
+
+if (demoPaymentForm) {
+  demoPaymentForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const message = $("#demo-payment-message");
+    const method = $("#method")?.value;
+    const amount = Number($("#amount")?.value);
+    const transactionId = $("#txid")?.value.trim();
+
+    const showMessage = (text) => {
+      if (message) {
+        message.textContent = text;
+      } else {
+        alert(text);
+      }
+    };
+
+    if (!auth || !db || !auth.currentUser) {
+      showMessage("আগে Login করো, তারপর আবার চেষ্টা করো।");
+      return;
+    }
+
+    if (
+      !["bkash", "nagad"].includes(method) ||
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      amount > 10000 ||
+      typeof transactionId !== "string" ||
+      !/^DEMO-[A-Za-z0-9-]{1,74}$/.test(transactionId)
+    ) {
+      showMessage(
+        "তথ্য ঠিক করো। Amount 1–10000 এবং Demo ID যেমন DEMO-12345 দাও।"
+      );
+      return;
+    }
+
+    const submitButton =
+      demoPaymentForm.querySelector('[type="submit"]');
+
+    if (submitButton) submitButton.disabled = true;
+
+    showMessage("Demo Request জমা হচ্ছে...");
+
+    try {
+      await addDoc(collection(db, "demoPaymentRequests"), {
+        userId: auth.currentUser.uid,
+        method,
+        amount,
+        transactionId,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
+
+      showMessage("Demo Request সফলভাবে সংরক্ষিত হয়েছে!");
+      demoPaymentForm.reset();
+
+    } catch (error) {
+      console.error(
+        "Demo request error:",
+        error.code,
+        error.message
+      );
+
+      showMessage(
+        `Request সংরক্ষণ হয়নি: ${error.code || "unknown"} — ${error.message || "আবার চেষ্টা করো।"}`
+      );
+
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+}
+
 function esc(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
