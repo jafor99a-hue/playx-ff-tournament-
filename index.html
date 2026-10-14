@@ -226,6 +226,53 @@
         <label>Details<input id="resultDetails" maxlength="300" placeholder="ঐচ্ছিক"></label>
         <button class="btn" type="submit">Result প্রকাশ</button>
       </form>
+    <!-- Demo Wallet Admin Control -->
+    <div class="admin-grid">
+      <form id="demoWalletForm">
+        <h3>Demo Balance Control</h3>
+
+        <p class="muted">
+          শুধু অনুমোদিত Admin Demo Balance পরিচালনা করতে পারবেন।
+        </p>
+
+        <label for="walletUid">
+          User UID
+          <input
+            id="walletUid"
+            type="text"
+            placeholder="Firebase User UID"
+            required
+          >
+        </label>
+
+        <label for="walletAmount">
+          Amount (Demo টাকা)
+          <input
+            id="walletAmount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="যেমন 100"
+            required
+          >
+        </label>
+
+        <button class="btn" id="walletCheck" type="button">
+          Balance দেখুন
+        </button>
+
+        <button class="btn" id="walletAdd" type="button">
+          Demo Balance যোগ করুন
+        </button>
+
+        <button class="btn" id="walletSubtract" type="button">
+          Demo Balance কমান
+        </button>
+
+        <p id="walletResult" class="muted" role="status"></p>
+      </form>
+    </div>
+    <!-- End Demo Wallet Admin Control -->
     </div>
 
     <h3>Registrations</h3>
