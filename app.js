@@ -736,3 +736,9 @@ $("#nav").querySelectorAll("a").forEach((link) => {
     $("#nav").classList.remove("open");
   });
 });
+const demoBalanceElement = document.getElementById("demoBalance");
+
+if (demoBalanceElement) {
+  demoBalanceElement.textContent = "৳0.00";
+}
+
