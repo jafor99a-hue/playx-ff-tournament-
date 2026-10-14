@@ -12,6 +12,55 @@
 <section class="section" id="tournaments"><div class="section-head"><div><p class="eyebrow">FIND YOUR MATCH</p><h2>চলমান টুর্নামেন্ট</h2></div><span class="muted">Live database</span></div><div class="cards" id="tournamentList"><p class="muted">Firebase থেকে টুর্নামেন্ট লোড হচ্ছে…</p></div></section>
 <section class="section split" id="rooms"><div class="panel"><p class="eyebrow">MATCH ROOM</p><h2>আমার Room Details</h2><p class="muted">তুমি যে টুর্নামেন্টে নিবন্ধিত, অ্যাডমিন রুম তথ্য প্রকাশ করলে এখানে দেখা যাবে।</p><div id="roomList"><p class="muted">লগইন করে নিবন্ধিত টুর্নামেন্ট দেখো।</p></div></div><div class="panel" id="how"><p class="eyebrow">HOW TO JOIN</p><h2>৩টি ধাপ</h2><div class="step"><span>01</span><div><b>অ্যাকাউন্ট তৈরি করো</b><p>ইমেইল ও পাসওয়ার্ড দিয়ে রেজিস্টার করো।</p></div></div><div class="step"><span>02</span><div><b>টুর্নামেন্টে Join করো</b><p>তোমার ইন-গেম নাম ও UID দাও।</p></div></div><div class="step"><span>03</span><div><b>Room details দেখো</b><p>প্রকাশের পর অনুমোদিত প্লেয়াররা রুম তথ্য দেখতে পারবে।</p></div></div></div></section>
 <section class="section" id="results"><div class="section-head"><div><p class="eyebrow">MATCH HISTORY</p><h2>ফলাফল</h2></div></div><div class="table-wrap"><table><thead><tr><th>টুর্নামেন্ট</th><th>বিজয়ী / ফলাফল</th><th>প্রকাশ</th></tr></thead><tbody id="resultsList"><tr><td colspan="3">লোড হচ্ছে…</td></tr></tbody></table></div></section>
+<section class="section panel" id="demo-payment">
+  <p class="eyebrow">DEMO WALLET</p>
+  <h2>Demo Payment Request</h2>
+
+  <p class="muted">
+    এটি শুধু পরীক্ষার জন্য। কোনো বাস্তব টাকা পাঠানো হবে না।
+    Request জমা দিলেই পেমেন্ট যাচাই হয়েছে বোঝায় না।
+  </p>
+
+  <form id="demo-payment-form" class="form-grid">
+    <label for="method">Demo Payment Method:
+      <select id="method" required>
+        <option value="bkash">bKash (Demo)</option>
+        <option value="nagad">Nagad (Demo)</option>
+      </select>
+    </label>
+
+    <label for="amount">Demo Amount (৳):
+      <input
+        type="number"
+        id="amount"
+        min="1"
+        max="10000"
+        step="1"
+        required
+      >
+    </label>
+
+    <label for="txid">Demo Transaction ID:
+      <input
+        type="text"
+        id="txid"
+        maxlength="80"
+        required
+        placeholder="DEMO-12345"
+      >
+    </label>
+
+    <button class="btn" type="submit">
+      Submit Demo Request
+    </button>
+
+    <p id="demo-payment-message"
+       class="muted tiny"
+       role="status"
+       aria-live="polite"></p>
+  </form>
+</section>
+  
 <section class="section panel" id="adminPanel" hidden><p class="eyebrow">ADMIN ONLY</p><h2>Admin Panel</h2><p class="muted">এখান থেকে টুর্নামেন্ট তৈরি এবং ফলাফল প্রকাশ করা যাবে। Room ID/password শুধুমাত্র নিবন্ধিত প্লেয়ারদের জন্য।</p>
 <div class="admin-grid"><form id="tournamentForm"><h3>নতুন Tournament</h3><label>নাম<input id="tTitle" required maxlength="80" placeholder="যেমন Solo Clash"></label><label>Mode<select id="tMode"><option>SOLO</option><option>DUO</option><option>SQUAD</option></select></label><label>Map<input id="tMap" required maxlength="40" placeholder="Bermuda"></label><label>Prize pool (text)<input id="tPrize" required maxlength="40" placeholder="৳ 500 অথবা bragging rights"></label><label>Start time<input id="tStart" type="datetime-local" required></label><button class="btn" type="submit">Tournament তৈরি</button></form>
 <form id="roomForm"><h3>Room প্রকাশ</h3><label>Tournament<select id="roomTournament" required></select></label><label>Room ID<input id="roomId" required maxlength="40"></label><label>Room Password<input id="roomPassword" required maxlength="80"></label><button class="btn" type="submit">Room details সংরক্ষণ</button></form>
