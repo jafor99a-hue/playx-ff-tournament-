@@ -610,6 +610,158 @@ async function loadAdminData() {
     toast("Admin data লোড হয়নি। Rules ও Admin claim পরীক্ষা করো।");
   }
 }
+// PlayX FF Demo Wallet Admin Control
+
+function setupDemoWalletControls() {
+  const uidInput = document.getElementById("walletUid");
+  const amountInput = document.getElementById("walletAmount");
+  const checkBtn = document.getElementById("walletCheck");
+  const addBtn = document.getElementById("walletAdd");
+  const subtractBtn = document.getElementById("walletSubtract");
+  const result = document.getElementById("walletResult");
+
+  // HTML-এর ID না মিললে স্পষ্ট বার্তা দেখাও
+  if (!uidInput || !amountInput || !checkBtn ||
+      !addBtn || !subtractBtn || !result) {
+    console.error("Demo Wallet HTML IDs পাওয়া যায়নি।");
+    return;
+  }
+
+  // একই event listener বারবার যোগ করা আটকাও
+  if (checkBtn.dataset.walletReady === "true") return;
+
+  checkBtn.dataset.walletReady = "true";
+
+  function message(text) {
+    result.textContent = text;
+  }
+
+  async function verifyAdmin() {
+    if (!auth.currentUser) {
+      throw new Error("আগে Login করো।");
+    }
+
+    const token = await auth.currentUser.getIdTokenResult(true);
+
+    if (token.claims.admin !== true) {
+      throw new Error("Admin permission নেই।");
+    }
+
+    return auth.currentUser;
+  }
+
+  function getUid() {
+    const uid = uidInput.value.trim();
+
+    if (!uid || uid.length > 128) {
+      throw new Error("সঠিক User UID লিখো।");
+    }
+
+    return uid;
+  }
+
+  function getAmount() {
+    const amount = Number(amountInput.value);
+
+    if (!Number.isFinite(amount) ||
+        amount <= 0 ||
+        Math.round(amount * 100) !== amount * 100) {
+      throw new Error("সঠিক Amount লিখো, যেমন 100 বা 10.50।");
+    }
+
+    return amount;
+  }
+
+  async function handle(action) {
+    try {
+      message("অপেক্ষা করো...");
+
+      await verifyAdmin();
+
+      const uid = getUid();
+      const ref = doc(db, "demoWallet", uid);
+
+      if (action === "check") {
+        const snapshot = await getDoc(ref);
+
+        if (!snapshot.exists()) {
+          message("এই User-এর Wallet তৈরি করা নেই।");
+          return;
+        }
+
+        const balance = Number(snapshot.data().balance);
+
+        if (!Number.isFinite(balance) || balance < 0) {
+          throw new Error("Wallet Balance সঠিক নয়।");
+        }
+
+        message(`বর্তমান Demo Balance: ৳${balance.toFixed(2)}`);
+        return;
+      }
+
+      const amount = getAmount();
+
+      if (uid === auth.currentUser.uid) {
+        throw new Error("পরীক্ষার জন্য অন্য User-এর UID ব্যবহার করো।");
+      }
+
+      await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(ref);
+
+        if (!snapshot.exists()) {
+          throw new Error("Wallet নেই। আগে Demo Wallet তৈরি করো।");
+        }
+
+        const balance = Number(snapshot.data().balance);
+
+        if (!Number.isFinite(balance) || balance < 0) {
+          throw new Error("বর্তমান Balance সঠিক নয়।");
+        }
+
+        const cents = Math.round(balance * 100);
+        const change = Math.round(amount * 100);
+
+        const nextCents = action === "add"
+          ? cents + change
+          : cents - change;
+
+        if (nextCents < 0) {
+          throw new Error("Balance শূন্যের নিচে হতে পারবে না।");
+        }
+
+        transaction.update(ref, {
+          balance: nextCents / 100,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser.uid
+        });
+      });
+
+      message(
+        action === "add"
+          ? "Demo Balance যোগ হয়েছে। আবার Balance দেখো।"
+          : "Demo Balance কমানো হয়েছে। আবার Balance দেখো।"
+      );
+
+    } catch (error) {
+      console.error("Demo Wallet error:", error);
+      message(error.message || "Demo Wallet কাজ করেনি।");
+    }
+  }
+
+  checkBtn.addEventListener("click", () => handle("check"));
+  addBtn.addEventListener("click", () => handle("add"));
+  subtractBtn.addEventListener("click", () => handle("subtract"));
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    setupDemoWalletControls,
+    { once: true }
+  );
+} else {
+  setupDemoWalletControls();
+    }
 
 // ---------- Create Tournament ----------
 
