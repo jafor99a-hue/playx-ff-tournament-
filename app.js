@@ -1,5 +1,3 @@
-JavaScript
-
 import app from "./firebase-config.js";
 
 import {
@@ -43,6 +41,7 @@ let toastTimer;
 
 function toast(message) {
   const el = $("toast");
+
   if (!el) {
     console.log(message);
     return;
@@ -50,7 +49,9 @@ function toast(message) {
 
   el.textContent = message;
   el.classList.add("show");
+
   clearTimeout(toastTimer);
+
   toastTimer = setTimeout(
     () => el.classList.remove("show"),
     3200
@@ -179,6 +180,7 @@ $("auth-form").addEventListener("submit", async (event) => {
     }
   } catch (error) {
     $("auth-message").textContent = authError(error);
+    console.error("Login/Register error:", error);
   } finally {
     $("auth-submit").disabled = false;
   }
@@ -202,9 +204,6 @@ function authError(error) {
 
     "auth/network-request-failed":
       "ইন্টারনেট সংযোগ পরীক্ষা করুন।",
-
-    "permission-denied":
-      "Firestore Rules অনুমতি দিচ্ছে না। Firebase Rules পরীক্ষা করুন।",
 
     "permission-denied":
       "Firestore Rules অনুমতি দিচ্ছে না। Firebase Rules পরীক্ষা করুন।"
@@ -289,12 +288,10 @@ onAuthStateChanged(auth, async user => {
     isAdmin() ? "Admin" : "Player";
 
   $("admin-nav").hidden = !isAdmin();
-
-  // ডেমো ব্যালেন্স যোগ করার নিজের ফর্ম শুধু Admin দেখবেন
   $("demo-credit-form").hidden = !isAdmin();
 
-  // Admin-এর অন্য খেলোয়াড়ের ব্যালেন্স নিয়ন্ত্রণ
   const adminBalanceForm = $("admin-balance-form");
+
   if (adminBalanceForm) {
     adminBalanceForm.hidden = !isAdmin();
   }
@@ -555,9 +552,7 @@ async function showTournamentInfo(id) {
     console.error(error);
     toast("রুম তথ্য পড়া যায়নি। Firestore Rules পরীক্ষা করুন।");
   }
-}
-
-function renderJoined() {
+                            }function renderJoined() {
   const mine = tournaments.filter(
     t => joinedIds.has(t.id)
   );
@@ -687,8 +682,7 @@ $("demo-credit-form").addEventListener(
   }
 );
 
-// নতুন Admin ফিচার: যেকোনো Player-এর ডেমো ব্যালেন্স
-// বাড়ানো বা কমানো
+// Admin যেকোনো Player-এর ডেমো ব্যালেন্স বাড়ানো/কমানো
 const adminBalanceForm = $("admin-balance-form");
 
 if (adminBalanceForm) {
@@ -706,6 +700,7 @@ if (adminBalanceForm) {
       const action = $("balance-action").value;
       const amount = Number($("balance-amount").value);
       const message = $("balance-admin-message");
+
       const button = adminBalanceForm.querySelector(
         'button[type="submit"]'
       );
@@ -1051,13 +1046,15 @@ async function renderAdmin() {
     });
 }
 
+// app.js চালু করার শেষ অংশ
 try {
   showAuthMode("login");
   console.log("PlayX FF: app.js চালু হয়েছে");
 } catch (error) {
   console.error("PlayX FF startup error:", error);
+
   alert(
     "ওয়েবসাইট চালু করতে সমস্যা হয়েছে: " +
     error.message
   );
-}
+      }
