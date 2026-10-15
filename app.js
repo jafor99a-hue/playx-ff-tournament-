@@ -834,6 +834,12 @@ $("tournament-form").addEventListener(
           0,
           Number($("t-prize").value || 0)
         ),
+        entryFee: Math.max(
+  0,
+  Math.min(100000, Math.floor(
+    Number($("t-entry-fee").value || 0)
+  ))
+),
         slots: Math.max(
           1,
           Math.min(100, Number($("t-slots").value || 48))
