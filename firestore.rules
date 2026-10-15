@@ -9,40 +9,115 @@ service cloud.firestore {
 
     function isAdmin() {
       return signedIn()
-        && request.auth.token.email == "jafor99a@gmail.com"
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email == "jafor99a@gmail.com";
     }
 
-    function isParticipant(tournamentId) {
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function tournamentPath(tid) {
+      return /databases/$(database)/documents/tournaments/$(tid);
+    }
+
+    function joinPath(tid, uid) {
+      return /databases/$(database)/documents/tournamentJoins/$(tid + "_" + uid);
+    }
+
+    function validEntryTransaction(uid) {
+      return request.resource.data.diff(resource.data)
+          .affectedKeys().hasAll([
+            'demoBalance',
+            'lastEntryTournamentId'
+          ])
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly([
+            'demoBalance',
+            'lastEntryTournamentId'
+          ])
+        && request.resource.data.lastEntryTournamentId is string
+        && exists(tournamentPath(
+          request.resource.data.lastEntryTournamentId
+        ))
+        && get(tournamentPath(
+          request.resource.data.lastEntryTournamentId
+        )).data.entryFee is int
+        && get(tournamentPath(
+          request.resource.data.lastEntryTournamentId
+        )).data.entryFee >= 0
+        && resource.data.demoBalance is int
+        && request.resource.data.demoBalance is int
+        && request.resource.data.demoBalance >= 0
+        && request.resource.data.demoBalance
+          == resource.data.demoBalance
+            - get(tournamentPath(
+                request.resource.data.lastEntryTournamentId
+              )).data.entryFee
+        && getAfter(joinPath(
+          request.resource.data.lastEntryTournamentId,
+          uid
+        )).data.userId == uid
+        && getAfter(tournamentPath(
+          request.resource.data.lastEntryTournamentId
+        )).data.joinCount
+          == get(tournamentPath(
+              request.resource.data.lastEntryTournamentId
+            )).data.joinCount + 1;
+    }
+
+    function validJoinCreate(tid, uid) {
+      return exists(tournamentPath(tid))
+        && get(tournamentPath(tid)).data.entryFee is int
+        && get(tournamentPath(tid)).data.entryFee >= 0
+        && get(tournamentPath(tid)).data.slots is int
+        && get(tournamentPath(tid)).data.joinCount is int
+        && get(tournamentPath(tid)).data.joinCount
+          < get(tournamentPath(tid)).data.slots
+        && get(userPath(uid)).data.demoBalance is int
+        && getAfter(userPath(uid)).data.lastEntryTournamentId == tid
+        && getAfter(userPath(uid)).data.demoBalance
+          == get(userPath(uid)).data.demoBalance
+            - get(tournamentPath(tid)).data.entryFee
+        && getAfter(tournamentPath(tid)).data.joinCount
+          == get(tournamentPath(tid)).data.joinCount + 1;
+    }
+
+    function isParticipant(tid) {
       return signedIn()
-        && exists(
-          /databases/$(database)/documents/tournamentJoins/$(tournamentId + "_" + request.auth.uid)
-        );
+        && exists(joinPath(tid, request.auth.uid));
     }
 
     match /users/{userId} {
       allow create: if signedIn()
         && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName',
+          'demoBalance', 'createdAt', 'lastLoginAt'
+        ])
         && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
         && request.resource.data.demoBalance == 0
-        && request.resource.data.keys().hasAll([
-          'uid', 'displayName', 'email', 'demoBalance', 'createdAt'
-        ]);
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.lastLoginAt == request.time;
 
       allow read: if signedIn()
         && (request.auth.uid == userId || isAdmin());
 
       allow update: if isAdmin()
-        && request.resource.data.diff(resource.data)
-          .affectedKeys().hasOnly(['demoBalance'])
-        && request.resource.data.demoBalance is number
-        && request.resource.data.demoBalance >= 0
         || (
           signedIn()
           && request.auth.uid == userId
           && request.resource.data.diff(resource.data)
-            .affectedKeys()
-            .hasOnly(['displayName', 'email', 'lastLoginAt'])
+            .affectedKeys().hasOnly([
+              'displayName', 'email', 'lastLoginAt'
+            ])
+          && request.resource.data.email == request.auth.token.email
+        )
+        || (
+          signedIn()
+          && request.auth.uid == userId
+          && validEntryTransaction(userId)
         );
 
       allow delete: if isAdmin();
@@ -52,49 +127,129 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if isAdmin()
-        && request.resource.data.entryFee == 0
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.entryFee is int
+        && request.resource.data.entryFee >= 0
+        && request.resource.data.entryFee <= 1000
+        && request.resource.data.prizePool is int
+        && request.resource.data.prizePool >= 0
+        && request.resource.data.prizePool <= 100000
         && request.resource.data.slots is int
-        && request.resource.data.slots >= 2
-        && request.resource.data.slots <= 100;
+        && request.resource.data.slots >= 1
+        && request.resource.data.slots <= 100
+        && request.resource.data.joinCount == 0
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
 
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.diff(resource.data)
+            .affectedKeys().hasOnly(['joinCount'])
+          && resource.data.joinCount is int
+          && request.resource.data.joinCount == resource.data.joinCount + 1
+          && resource.data.slots is int
+          && resource.data.joinCount < resource.data.slots
+          && getAfter(joinPath(tournamentId, request.auth.uid)).data.userId
+            == request.auth.uid
+          && getAfter(userPath(request.auth.uid)).data.lastEntryTournamentId
+            == tournamentId
+          && getAfter(userPath(request.auth.uid)).data.demoBalance
+            == get(userPath(request.auth.uid)).data.demoBalance
+              - resource.data.entryFee
+        );
+
+      allow delete: if isAdmin();
     }
 
     match /tournamentJoins/{joinId} {
-      allow create: if signedIn()
-        && request.resource.data.userId == request.auth.uid
-        && joinId == request.resource.data.tournamentId + "_" + request.auth.uid
-        && request.resource.data.keys().hasAll([
-          'tournamentId', 'userId', 'email', 'playerName', 'joinedAt'
-        ])
-        && exists(
-          /databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)
-        )
-        && get(
-          /databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)
-        ).data.entryFee == 0;
-
       allow read: if signedIn()
-        && (
-          resource.data.userId == request.auth.uid
-          || isAdmin()
+        && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'userId', 'tournamentId', 'tournamentTitle',
+          'status', 'createdAt'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.tournamentId is string
+        && request.resource.data.tournamentTitle is string
+        && request.resource.data.status == 'joined'
+        && request.resource.data.createdAt == request.time
+        && joinId == request.resource.data.tournamentId
+          + "_" + request.auth.uid
+        && validJoinCreate(
+          request.resource.data.tournamentId,
+          request.auth.uid
         );
 
       allow update, delete: if isAdmin();
     }
 
+    match /demoBalanceRequests/{requestId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'userId', 'type', 'amount',
+          'demoTransactionId', 'status', 'createdAt'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type in ['add', 'withdraw']
+        && request.resource.data.amount is int
+        && request.resource.data.amount >= 1
+        && request.resource.data.amount <= 1000
+        && request.resource.data.demoTransactionId is string
+        && request.resource.data.demoTransactionId.size() >= 8
+        && request.resource.data.demoTransactionId.size() <= 40
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+
+      allow read: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.userId == request.auth.uid
+        );
+
+      allow update, delete: if false;
+    }
+
     match /tournamentRooms/{tournamentId} {
       allow read: if isAdmin() || isParticipant(tournamentId);
-      allow create, update, delete: if isAdmin();
+
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'tournamentId', 'roomId', 'roomPassword', 'updatedAt'
+        ])
+        && request.resource.data.tournamentId == tournamentId
+        && request.resource.data.roomId is string
+        && request.resource.data.roomPassword is string
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin();
     }
 
     match /tournamentResults/{resultId} {
       allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
-    }
 
-    match /demoBalanceRequests/{requestId} {
-      allow create: if signedIn()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.amount is int
-        && request.resource.data.amount >= 1
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'tournamentId', 'tournamentTitle', 'winner',
+          'position', 'prize', 'createdBy', 'createdAt'
+        ])
+        && request.resource.data.tournamentId is string
+        && request.resource.data.tournamentTitle is string
+        && request.resource.data.winner is string
+        && request.resource.data.position is int
+        && request.resource.data.position >= 1
+        && request.resource.data.position <= 100
+        && request.resource.data.prize is int
+        && request.resource.data.prize >= 0
+        && request.resource.data.prize <= 100000
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update, delete: if isAdmin();
+    }
+  }
+}
