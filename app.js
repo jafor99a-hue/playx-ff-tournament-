@@ -199,7 +199,7 @@ async function joinTournament(id) {
     toast("টুর্নামেন্টে সফলভাবে যোগ দিয়েছেন!");
   } catch (error) { console.error(error); toast(authError(error)); }
 }
-function showTournamentInfo(id) {
+async function showTournamentInfo(id) {
   const t = tournaments.find(x => x.id === id);
   if (!t) return;
   const joined = joinedIds.has(id);
