@@ -1072,3 +1072,58 @@ try {
     error.message
   );
       }
+const addMoneyForm = document.getElementById("add-money-form");
+
+if (addMoneyForm) {
+  addMoneyForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!currentUser) {
+      return;
+    }
+
+    const amount = Number(
+      document.getElementById("am-amount").value
+    );
+    const phone = document.getElementById("am-phone").value.trim();
+    const transactionId = document
+      .getElementById("am-transaction").value.trim();
+    const message = document.getElementById("am-message");
+    const button = addMoneyForm.querySelector('button[type="submit"]');
+
+    if (
+      !Number.isSafeInteger(amount) ||
+      amount < 1 ||
+      amount > 100000 ||
+      phone.length < 4 ||
+      transactionId.length < 4
+    ) {
+      message.textContent = "তথ্যগুলো সঠিকভাবে পূরণ করো।";
+      return;
+    }
+
+    button.disabled = true;
+    message.textContent = "Request জমা হচ্ছে…";
+
+    try {
+      await addDoc(collection(db, "addMoneyRequests"), {
+        userId: currentUser.uid,
+        amount,
+        senderPhone: phone,
+        transactionId,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
+
+      addMoneyForm.reset();
+      message.textContent =
+        "Demo Request Pending। Admin যাচাই না করা পর্যন্ত ব্যালেন্স বাড়বে না।";
+    } catch (error) {
+      console.error(error);
+      message.textContent = authError(error);
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
