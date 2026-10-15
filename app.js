@@ -383,6 +383,14 @@ function tournamentCard(t) {
             ৳${Number(t.prize || 0).toLocaleString("en-US")}
           </strong>
         </div>
+        <div class="meta-row">
+          <span>🎟️ Entry Fee</span>
+          <strong>
+            ${
+              Number(t.entryFee || 0).toLocaleString("en-US")
+            } Demo Balance
+          </strong>
+        </div>
 
         <div class="meta-row">
           <span>🗺️ ম্যাপ</span>
