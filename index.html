@@ -317,27 +317,42 @@
             </div>
 
             <div class="two-col">
-              <div>
-                <label for="t-prize">প্রাইজ পুল (৳)</label>
-                <input id="t-prize" type="number"
-                       min="0" value="0" required>
-                <label for="t-entry-fee">Entry Fee (Demo Balance)</label>
+  <div>
+    <label for="t-prize">প্রাইজ পুল (৳)</label>
+    <input
+      id="t-prize"
+      type="number"
+      min="0"
+      max="1000000"
+      step="1"
+      value="0"
+      required
+    >
+  </div>
+
+  <div>
+    <label for="t-entry-fee">Entry Fee (Demo Balance)</label>
+    <input
+      id="t-entry-fee"
+      type="number"
+      min="0"
+      max="100000"
+      step="1"
+      value="0"
+      required
+    >
+  </div>
+</div>
+
+<label for="t-slots">স্লট</label>
 <input
-  id="t-entry-fee"
+  id="t-slots"
   type="number"
-  min="0"
-  max="100000"
-  step="1"
-  value="0"
+  min="1"
+  max="100"
+  value="48"
   required
 >
-              </div>
-              <div>
-                <label for="t-slots">স্লট</label>
-                <input id="t-slots" type="number"
-                       min="1" max="100" value="48" required>
-              </div>
-            </div>
 
             <label for="t-time">ম্যাচের সময়</label>
             <input id="t-time" type="datetime-local">
