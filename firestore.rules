@@ -9,8 +9,8 @@ service cloud.firestore {
 
     function isAdmin() {
       return signedIn()
-        && request.auth.token.email
-          == "jafor99a@gmail.com";
+        && request.auth.token.email == "jafor99a@gmail.com"
+        && request.auth.token.email_verified == true;
     }
 
     function isParticipant(tournamentId) {
@@ -22,21 +22,28 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow create: if signedIn()
-        && request.auth.uid == userId;
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.demoBalance == 0
+        && request.resource.data.keys().hasAll([
+          'uid', 'displayName', 'email', 'demoBalance', 'createdAt'
+        ]);
 
       allow read: if signedIn()
         && (request.auth.uid == userId || isAdmin());
 
-      allow update: if signedIn()
-        && request.auth.uid == userId
+      allow update: if isAdmin()
         && request.resource.data.diff(resource.data)
-          .affectedKeys()
-          .hasOnly([
-            'displayName',
-            'email',
-            'lastLoginAt',
-            'demoBalance'
-          ]);
+          .affectedKeys().hasOnly(['demoBalance'])
+        && request.resource.data.demoBalance is number
+        && request.resource.data.demoBalance >= 0
+        || (
+          signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data)
+            .affectedKeys()
+            .hasOnly(['displayName', 'email', 'lastLoginAt'])
+        );
 
       allow delete: if isAdmin();
     }
@@ -44,34 +51,28 @@ service cloud.firestore {
     match /tournaments/{tournamentId} {
       allow read: if signedIn();
 
-      allow create: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.entryFee == 0
+        && request.resource.data.slots is int
+        && request.resource.data.slots >= 2
+        && request.resource.data.slots <= 100;
 
-      allow update: if isAdmin()
-        || (
-          signedIn()
-          && request.resource.data.diff(resource.data)
-            .affectedKeys()
-            .hasOnly(['joinedCount'])
-          && request.resource.data.joinedCount
-            == resource.data.joinedCount + 1
-        );
-
-      allow delete: if isAdmin();
+      allow update, delete: if isAdmin();
     }
 
     match /tournamentJoins/{joinId} {
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
-        && joinId
-          == request.resource.data.tournamentId
-            + "_" + request.auth.uid
+        && joinId == request.resource.data.tournamentId + "_" + request.auth.uid
         && request.resource.data.keys().hasAll([
-          'tournamentId',
-          'userId',
-          'email',
-          'playerName',
-          'joinedAt'
-        ]);
+          'tournamentId', 'userId', 'email', 'playerName', 'joinedAt'
+        ])
+        && exists(
+          /databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)
+        )
+        && get(
+          /databases/$(database)/documents/tournaments/$(request.resource.data.tournamentId)
+        ).data.entryFee == 0;
 
       allow read: if signedIn()
         && (
@@ -83,10 +84,17 @@ service cloud.firestore {
     }
 
     match /tournamentRooms/{tournamentId} {
-      allow read: if isAdmin()
-        || isParticipant(tournamentId);
-
+      allow read: if isAdmin() || isParticipant(tournamentId);
       allow create, update, delete: if isAdmin();
     }
-  }
-}
+
+    match /tournamentResults/{resultId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /demoBalanceRequests/{requestId} {
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.amount is int
+        && request.resource.data.amount >= 1
