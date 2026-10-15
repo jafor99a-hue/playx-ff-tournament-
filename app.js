@@ -231,6 +231,10 @@ async function refreshBalance() {
 }
 $("demo-credit-form").addEventListener("submit", async event => {
   event.preventDefault();
+  if (!isAdmin()) {
+  toast("ডেমো ব্যালেন্স শুধু Admin বাড়াতে পারবেন।");
+  return;
+  }
   const amount = Number($("demo-amount").value);
   if (!Number.isFinite(amount) || amount < 1 || amount > 1000) { toast("১ থেকে ১০০০-এর মধ্যে পরিমাণ দিন।"); return; }
   try {
