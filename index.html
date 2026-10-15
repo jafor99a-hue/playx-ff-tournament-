@@ -170,14 +170,14 @@
     
 
     <p class="muted">
-      PLAYX FF TOURNAMENT পেমেন্ট সম্পন্ন করুন 01346022330 Send Money করুন, তারপর নিজের একাউন্ট নাম্বার ও TrxID সাবমিট করুন।
+      এটি শুধু Demo Wallet Request পরীক্ষা করার ফর্ম। এখানে কোনো বাস্তব টাকা পাঠাবে না। এই Request জমা দিলে Demo Balance বাড়বে না।
     </p>
 
     <form id="demo-payment-form" class="form-grid">
       <label for="method"> Payment Method
         <select id="method" required>
-          <option value="bkash">bKash (01346022330)</option>
-          <option value="nagad">Nagad (01346022330)</option>
+          <option value="demo-bkash">Demo bKash Request (বাস্তব পেমেন্ট নয়)</option>
+          <option value="demo-nagad">Demo Nagad Request (বাস্তব পেমেন্ট নয়)</option>
         </select>
       </label>
 
@@ -185,11 +185,11 @@
         <input type="number" id="amount" min="1" max="10000" step="1" required>
       </label>
 
-      <label for="txid"> Transaction ID
-        <input type="text" id="txid" maxlength="80" required placeholder="">
+      <label for="txid"> Demo Transaction ID
+        <input type="text" id="txid" maxlength="80" required placeholder="DEMO-12345">
       </label>
 
-      <button class="btn" type="submit">Submit Request</button>
+      <button class="btn" type="submit">Submit Demo Request</button>
       <p id="payment-message" class="muted tiny" role="status" aria-live="polite"></p>
     </form>
   </section>
@@ -209,6 +209,15 @@
         <label>Prize pool (text)<input id="tPrize" required maxlength="40" placeholder="Free tournament"></label>
         <label>Start time<input id="tStart" type="datetime-local" required></label>
         <button class="btn" type="submit">Tournament তৈরি</button>
+      </form>
+
+      <form id="feeForm">
+        <h3>Entry Fee নির্ধারণ ও নিশ্চিত</h3>
+        <p class="muted">প্রতি Tournament-এর Demo Entry Fee Admin এখানে সেট করবেন। নিশ্চিত না করা নতুন Tournament-এ Join করা যাবে না।</p>
+        <label>Tournament নির্বাচন<select id="feeTournament" required></select></label>
+        <label>Entry Fee (Demo টাকা)<input id="entryFeeAmount" type="number" min="0" max="1000000" step="1" value="0" required></label>
+        <label class="fee-confirm-label"><input id="entryFeeConfirmed" type="checkbox" required> আমি Entry Fee নিশ্চিত করছি</label>
+        <button class="btn" type="submit">Entry Fee সংরক্ষণ ও নিশ্চিত</button>
       </form>
 
       <form id="roomForm">
@@ -332,6 +341,7 @@
     <h2 id="joinTitle">Join Tournament</h2>
 
     <form id="joinForm">
+      <p id="joinFee" class="muted">Entry Fee: ৳0 (Free)</p>
       <label>In-game name<input id="ign" required maxlength="40"></label>
       <label>Free Fire UID<input id="ffuid" required inputmode="numeric" pattern="[0-9]{5,20}" title="৫–২০ সংখ্যার UID" maxlength="20"></label>
       <label>Team name (DUO/SQUAD হলে)<input id="teamName" maxlength="50"></label>
