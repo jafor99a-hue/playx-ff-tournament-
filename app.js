@@ -852,7 +852,7 @@ $("tournament-form").addEventListener(
       });
 
       $("tournament-form").reset();
-      $("t-prize").value = "0";
+      $("t-prize").value = "0";$("t-entry-fee").value = "0";
       $("t-slots").value = "48";
 
       await loadTournaments();
