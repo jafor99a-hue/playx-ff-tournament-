@@ -123,7 +123,7 @@ onAuthStateChanged(auth, async user => {
   if (!user) return;
   $("user-name").textContent = user.displayName || (user.email || "Player").split("@")[0];
   $("user-role").textContent = isAdmin() ? "Admin" : "Player";
-  $("admin-nav").hidden = !isAdmin();
+  $("admin-nav").hidden = !isAdmin();$("demo-credit-form").hidden = !isAdmin();
   $("welcome-title").textContent = `স্বাগতম, ${user.displayName || "Player"}`;
   try {
     await setDoc(doc(db, "users", user.uid), {
