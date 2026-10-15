@@ -211,7 +211,7 @@ async function loadTournaments() {
       button.className = "btn";
       button.type = "button";
       button.textContent = "Join Now";
-      button.addEventListener("click", () => openJoinModal(t));
+      button.addEventListener("click", () => joinTournament(t.id, t));
 
       card.append(heading, info, start, button);
       container.append(card);
