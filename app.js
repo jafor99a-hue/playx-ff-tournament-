@@ -13,7 +13,7 @@ const db = getFirestore(app);
 
 // IMPORTANT: এখানে আপনার Firebase অ্যাকাউন্টের Admin email লিখুন।
 // Firestore Rules ফাইলেও একই email বসাতে হবে।
-const ADMIN_EMAILS = ["YOUR_ADMIN_EMAIL@example.com"];
+const ADMIN_EMAILS = ["jafor99a@gmail.com"];
 
 const $ = (id) => document.getElementById(id);
 let currentUser = null;
