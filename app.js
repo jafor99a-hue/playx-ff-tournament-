@@ -201,6 +201,8 @@ if (!configured) {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    auth = getAuth(app);
+    db = getFirestore(app);
 
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
