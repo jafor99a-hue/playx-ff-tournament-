@@ -319,4 +319,10 @@ async function renderAdmin() {
     } catch(e) { toast(authError(e)); }
   }));
 }
-showAuthMode("login");
+try {
+  showAuthMode("login");
+  console.log("PlayX FF: app.js চালু হয়েছে");
+} catch (error) {
+  console.error("PlayX FF startup error:", error);
+  alert("ওয়েবসাইট চালু করতে সমস্যা হয়েছে: " + error.message);
+}
