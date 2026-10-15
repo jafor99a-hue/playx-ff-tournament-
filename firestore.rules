@@ -3,136 +3,90 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Admin permission
+    function signedIn() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
-      return request.auth != null
-        && request.auth.token.admin == true;
+      return signedIn()
+        && request.auth.token.email
+          == "jafor99a@gmail.com";
     }
 
-    // User সত্যিই Tournament-এ Join করেছে কি না
-    function hasJoined(tournamentId) {
-      return request.auth != null
+    function isParticipant(tournamentId) {
+      return signedIn()
         && exists(
-          /databases/$(database)/documents/registrations/$(request.auth.uid + '_' + tournamentId)
-        )
-        && get(
-          /databases/$(database)/documents/registrations/$(request.auth.uid + '_' + tournamentId)
-        ).data.uid == request.auth.uid
-        && get(
-          /databases/$(database)/documents/registrations/$(request.auth.uid + '_' + tournamentId)
-        ).data.tournamentId == tournamentId;
+          /databases/$(database)/documents/tournamentJoins/$(tournamentId + "_" + request.auth.uid)
+        );
     }
 
-    // Tournament
-    match /tournaments/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // User profile
     match /users/{userId} {
-      allow read, create: if request.auth != null
+      allow create: if signedIn()
         && request.auth.uid == userId;
 
-      allow update, delete: if isAdmin();
+      allow read: if signedIn()
+        && (request.auth.uid == userId || isAdmin());
+
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasOnly([
+            'displayName',
+            'email',
+            'lastLoginAt',
+            'demoBalance'
+          ]);
+
+      allow delete: if isAdmin();
     }
 
-    // Tournament registrations
-    match /registrations/{id} {
-      allow get: if isAdmin()
+    match /tournaments/{tournamentId} {
+      allow read: if signedIn();
+
+      allow create: if isAdmin();
+
+      allow update: if isAdmin()
         || (
-          request.auth != null
-          && id.matches('^' + request.auth.uid + '_.*$')
+          signedIn()
+          && request.resource.data.diff(resource.data)
+            .affectedKeys()
+            .hasOnly(['joinedCount'])
+          && request.resource.data.joinedCount
+            == resource.data.joinedCount + 1
         );
 
-      allow list: if isAdmin()
-        || (
-          request.auth != null
-          && resource.data.uid == request.auth.uid
-        );
-
-      allow create: if request.auth != null
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.tournamentId is string
-        && request.resource.data.freeFireUid is string
-        && request.resource.data.inGameName is string;
-
-      allow update, delete: if isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Room details
-    match /roomDetails/{id} {
-      allow get: if isAdmin() || hasJoined(id);
-      allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Tournament results
-    match /results/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Demo payment requests — বাস্তব পেমেন্ট নয়
-    match /demoPaymentRequests/{requestId} {
-
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasAll([
-          'userId',
-          'method',
-          'amount',
-          'transactionId',
-          'status',
-          'createdAt'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'userId',
-          'method',
-          'amount',
-          'transactionId',
-          'status',
-          'createdAt'
-        ])
+    match /tournamentJoins/{joinId} {
+      allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.method in ['bkash', 'nagad']
-        && request.resource.data.amount is number
-        && request.resource.data.amount > 0
-        && request.resource.data.amount <= 10000
-        && request.resource.data.transactionId is string
-        && request.resource.data.transactionId.matches(
-          '^DEMO-[A-Za-z0-9-]{1,74}$'
-        )
-        && request.resource.data.status == 'pending'
-        && request.resource.data.createdAt == request.time;
+        && joinId
+          == request.resource.data.tournamentId
+            + "_" + request.auth.uid
+        && request.resource.data.keys().hasAll([
+          'tournamentId',
+          'userId',
+          'email',
+          'playerName',
+          'joinedAt'
+        ]);
 
-      // User নিজের Request পড়বে; Admin সব Request পড়বে
-      allow read: if request.auth != null
+      allow read: if signedIn()
         && (
           resource.data.userId == request.auth.uid
           || isAdmin()
         );
 
-      // Request পরিবর্তন বা মুছে ফেলা নিষিদ্ধ
-      allow update, delete: if false;
+      allow update, delete: if isAdmin();
     }
 
-    // Demo Wallet — Admin controlled
-    match /demoWallet/{uid} {
+    match /tournamentRooms/{tournamentId} {
+      allow read: if isAdmin()
+        || isParticipant(tournamentId);
 
-      // Admin সব Wallet-এর নির্দিষ্ট Document পড়তে পারবে।
-      // User শুধু নিজের Wallet পড়তে পারবে।
-      allow get: if request.auth != null
-        && (
-          isAdmin()
-          || request.auth.uid == uid
-        );
-
-      // Wallet-এর তালিকা শুধু Admin দেখতে পারবে।
-      allow list: if isAdmin();
-
-      // Wallet তৈরি, পরিবর্তন ও মুছতে শুধু Admin পারবে।
       allow create, update, delete: if isAdmin();
     }
-
   }
 }
