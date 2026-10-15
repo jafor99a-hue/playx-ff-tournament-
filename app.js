@@ -1,3 +1,8 @@
+// ============================================
+// PlayX FF Tournament - app.js
+// Firebase SDK 11.6.0
+// ============================================
+
 import app from "./firebase-config.js";
 
 import {
@@ -24,31 +29,58 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
+// ---------- Firebase ----------
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
 let selectedTournament = null;
 let tournamentsCache = [];
+let authMode = "register";
+
+// ---------- Helpers ----------
 
 const $ = (selector) => document.querySelector(selector);
 
+function byId(...ids) {
+  for (const id of ids) {
+    const element = document.getElementById(id);
+    if (element) return element;
+  }
+  return null;
+}
+
+function field(...ids) {
+  for (const id of ids) {
+    const element = document.getElementById(id);
+    if (element) return element.value?.trim() || "";
+  }
+  return "";
+}
+
 function toast(message) {
-  const el = $("#toast");
-  if (el) {
-    el.textContent = message;
-    el.hidden = false;
+  const element = byId("toast", "message", "authMessage");
+
+  if (element) {
+    element.textContent = message;
+    element.hidden = false;
   } else {
     alert(message);
   }
 }
 
-function money(value) {
-  return "৳" + Number(value || 0).toLocaleString("en-BD");
+function money(amount) {
+  return "৳" + Number(amount || 0).toLocaleString("en-BD");
 }
 
-function value(id) {
-  return $("#" + id)?.value?.trim() || "";
+function showError(error, fallback = "কাজটি সম্পন্ন হয়নি।") {
+  console.error(error);
+  toast(error?.message || fallback);
+}
+
+function escapeText(value) {
+  return String(value ?? "");
 }
 
 function isAdmin(token) {
@@ -61,103 +93,178 @@ async function requireAdmin() {
     return false;
   }
 
-  const token = await currentUser.getIdTokenResult(true);
+  try {
+    const token = await currentUser.getIdTokenResult(true);
 
-  if (!isAdmin(token)) {
-    toast("তোমার Admin permission নেই।");
+    if (!isAdmin(token)) {
+      toast("তোমার Admin permission নেই।");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    showError(error, "Admin permission যাচাই করা যায়নি।");
     return false;
   }
-
-  return true;
 }
 
-// ---------- Login / Register ----------
-
-let authMode = "register";
+// ============================================
+// LOGIN / REGISTER
+// ============================================
 
 function setAuthMode(mode) {
   authMode = mode;
 
-  const nameWrap = $("#displayNameWrap");
-  const submit = $("#authSubmit");
+  const nameWrap = byId("displayNameWrap", "nameWrap");
+  const submit = byId("authSubmit", "auth-submit");
+  const nameInput = byId("displayName", "name");
 
-  if (nameWrap) nameWrap.hidden = mode !== "register";
-  if (submit) {
-    submit.textContent =
-      mode === "register" ? "Register" : "Login";
+  if (nameWrap) {
+    nameWrap.hidden = mode !== "register";
   }
 
-  const password = $("#password");
+  if (nameInput) {
+    nameInput.required = mode === "register";
+  }
+
+  if (submit) {
+    submit.textContent = mode === "register" ? "Register" : "Login";
+  }
+
+  const password = byId("password");
+
   if (password) {
     password.autocomplete =
       mode === "register" ? "new-password" : "current-password";
   }
-
-  $("#account")?.scrollIntoView({ behavior: "smooth" });
 }
 
-$("#loginBtn")?.addEventListener("click", () => setAuthMode("login"));
-$("#registerBtn")?.addEventListener("click", () => setAuthMode("register"));
-
-$("#authForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const email = value("email");
-  const password = $("#password")?.value || "";
-  const displayName = value("displayName");
-  const message = $("#authMessage");
-
-  try {
-    if (message) message.textContent = "অপেক্ষা করো...";
-
-    if (authMode === "register") {
-      if (password.length < 6) {
-        throw new Error("Password কমপক্ষে ৬ অক্ষরের হতে হবে।");
-      }
-
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      if (displayName) {
-        await updateProfile(credential.user, { displayName });
-      }
-
-      if (message) {
-        message.textContent = "Registration সফল হয়েছে।";
-      }
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-
-      if (message) {
-        message.textContent = "Login সফল হয়েছে।";
-      }
-    }
-  } catch (error) {
-    console.error("Authentication:", error);
-
-    if (message) {
-      message.textContent =
-        error.message || "Login/Register সফল হয়নি।";
-    }
-  }
+byId("loginBtn", "login-btn")?.addEventListener("click", () => {
+  setAuthMode("login");
 });
 
-$("#logoutBtn")?.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    toast("Logout হয়েছে।");
-  } catch (error) {
-    toast(error.message);
-  }
+byId("registerBtn", "register-btn")?.addEventListener("click", () => {
+  setAuthMode("register");
 });
+
+// Form ID: camelCase এবং kebab-case দুইটিই সমর্থিত
+const authForm = byId("authForm", "auth-form");
+
+if (authForm) {
+  authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = field("email");
+    const password = byId("password")?.value || "";
+    const displayName = field("displayName", "name");
+    const message = byId("authMessage", "message");
+
+    const submitButton = byId(
+      "authSubmit",
+      "auth-submit",
+      "register-btn",
+      "login-btn"
+    );
+
+    if (!email || !password) {
+      toast("Email ও Password পূরণ করো।");
+      return;
+    }
+
+    if (submitButton) submitButton.disabled = true;
+
+    try {
+      if (message) message.textContent = "অপেক্ষা করো...";
+
+      if (authMode === "register") {
+        if (password.length < 6) {
+          throw new Error("Password কমপক্ষে ৬ অক্ষরের হতে হবে।");
+        }
+
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+        if (displayName) {
+          await updateProfile(credential.user, {
+            displayName
+          });
+        }
+
+        if (message) {
+          message.textContent = "Registration সফল হয়েছে!";
+        }
+      } else {
+        await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+        if (message) {
+          message.textContent = "Login সফল হয়েছে!";
+        }
+      }
+    } catch (error) {
+      console.error("Login/Register error:", error);
+
+      if (message) {
+        message.textContent = friendlyAuthError(error);
+      } else {
+        toast(friendlyAuthError(error));
+      }
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+} else {
+  console.error(
+    "Login/Register form পাওয়া যায়নি। HTML-এ auth-form বা authForm ID পরীক্ষা করো।"
+  );
+}
+
+function friendlyAuthError(error) {
+  const messages = {
+    "auth/email-already-in-use": "এই Email দিয়ে আগে Account খোলা হয়েছে।",
+    "auth/invalid-email": "সঠিক Email লিখো।",
+    "auth/weak-password": "Password কমপক্ষে ৬ অক্ষরের হতে হবে।",
+    "auth/invalid-credential": "Email অথবা Password ভুল হয়েছে।",
+    "auth/user-not-found": "এই Email দিয়ে Account পাওয়া যায়নি।",
+    "auth/wrong-password": "Password ভুল হয়েছে।",
+    "auth/network-request-failed": "ইন্টারনেট সংযোগ পরীক্ষা করো।",
+    "auth/operation-not-allowed": "Firebase-এ Email/Password Login চালু করো।"
+  };
+
+  return messages[error?.code] ||
+    error?.message ||
+    "Login/Register করা যায়নি।";
+}
+
+// Login/Register mode buttons না থাকলে Submit-এর default mode Register।
+setAuthMode("register");
+
+// ---------- Logout ----------
+
+byId("logoutBtn", "logout-btn")?.addEventListener(
+  "click",
+  async () => {
+    try {
+      await signOut(auth);
+      toast("Logout হয়েছে।");
+    } catch (error) {
+      showError(error, "Logout করা যায়নি।");
+    }
+  }
+);
+
+// ---------- Update User Interface ----------
 
 function updateUserUI(user, admin) {
-  const status = $("#userStatus");
-  const title = $("#accountTitle");
-  const authForm = $("#authForm");
+  const status = byId("userStatus", "user-status");
+  const title = byId("accountTitle", "account-title");
+  const form = byId("authForm", "auth-form");
 
   if (status) {
     status.textContent = user
@@ -171,33 +278,45 @@ function updateUserUI(user, admin) {
       : "Welcome to PlayX";
   }
 
-  if (authForm) authForm.hidden = !!user;
+  if (form) form.hidden = !!user;
 
-  if ($("#loginBtn")) $("#loginBtn").hidden = !!user;
-  if ($("#registerBtn")) $("#registerBtn").hidden = !!user;
-  if ($("#logoutBtn")) $("#logoutBtn").hidden = !user;
+  const login = byId("loginBtn", "login-btn");
+  const register = byId("registerBtn", "register-btn");
+  const logout = byId("logoutBtn", "logout-btn");
+  const adminPanel = byId("adminPanel", "admin-panel");
 
-  const adminPanel = $("#adminPanel");
+  if (login) login.hidden = !!user;
+  if (register) register.hidden = !!user;
+  if (logout) logout.hidden = !user;
   if (adminPanel) adminPanel.hidden = !(user && admin);
 }
 
-// ---------- Tournament List ----------
+// ============================================
+// TOURNAMENT LIST
+// ============================================
 
 async function loadTournaments() {
-  const container = $("#tournamentList");
+  const container = byId("tournamentList", "tournament-list");
   if (!container) return;
 
   try {
-    const snap = await getDocs(
-      query(
-        collection(db, "tournaments"),
-        orderBy("createdAt", "desc")
-      )
-    );
+    let snapshot;
 
-    tournamentsCache = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data()
+    try {
+      snapshot = await getDocs(
+        query(
+          collection(db, "tournaments"),
+          orderBy("createdAt", "desc")
+        )
+      );
+    } catch {
+      // পুরোনো Tournament-এ createdAt না থাকলে fallback
+      snapshot = await getDocs(collection(db, "tournaments"));
+    }
+
+    tournamentsCache = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data()
     }));
 
     container.replaceChildren();
@@ -206,396 +325,127 @@ async function loadTournaments() {
       container.textContent = "এখনো কোনো Tournament নেই।";
     }
 
-    for (const t of tournamentsCache) {
+    for (const tournament of tournamentsCache) {
       const card = document.createElement("article");
       card.className = "tournament-card";
 
       const heading = document.createElement("h3");
-      heading.textContent = t.title || "Tournament";
+      heading.textContent = tournament.title || "Tournament";
 
       const info = document.createElement("p");
       info.textContent =
-        `Mode: ${t.mode || "—"} · Map: ${t.map || "—"} · Prize: ${t.prizeText || "—"}`;
+        `Mode: ${tournament.mode || "—"} · ` +
+        `Map: ${tournament.map || "—"} · ` +
+        `Prize: ${tournament.prizeText || "—"}`;
 
       const start = document.createElement("p");
       start.textContent =
-        "শুরু: " + (t.startTime || "সময় নির্ধারিত নয়");
+        "শুরু: " + (tournament.startTime || "সময় নির্ধারিত নয়");
 
-      const button = document.createElement("button");
-      button.className = "btn";
-      button.type = "button";
-      button.textContent = "Join Now";
-
-      const fee = Number(t.entryFee || 0);
+      const fee = Number(tournament.entryFee || 0);
       const feeInfo = document.createElement("p");
+
       feeInfo.className = "tournament-entry-fee";
       feeInfo.textContent =
-        "Entry Fee: " + money(fee) +
-        (fee === 0 ? " (Free)" : " (Demo)") +
+        `Entry Fee: ${money(fee)} ` +
+        (fee === 0 ? "(Free)" : "(Demo Wallet)") +
         (
-          t.entryFeeConfirmed === true ||
-          !Object.prototype.hasOwnProperty.call(t, "entryFeeConfirmed")
-            ? " · নিশ্চিত"
-            : " · Admin নিশ্চিত করেননি"
+          tournament.entryFeeConfirmed === false
+            ? " · Admin নিশ্চিত করেননি"
+            : " · নিশ্চিত"
         );
 
-      button.addEventListener("click", () => openJoinModal(t));
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn";
+      button.textContent = "Join Now";
+
+      button.addEventListener("click", () => {
+        openJoinModal(tournament);
+      });
 
       card.append(heading, info, start, feeInfo, button);
       container.append(card);
     }
 
-    await fillTournamentSelects();
+    fillTournamentSelects();
   } catch (error) {
-    console.error("loadTournaments:", error);
+    console.error("Tournament loading error:", error);
     container.textContent =
-      "Tournament লোড হয়নি। Firestore Rules ও createdAt পরীক্ষা করো।";
+      "Tournament লোড হয়নি। Firebase সংযোগ ও Firestore Rules পরীক্ষা করো।";
   }
 }
 
-async function fillTournamentSelects() {
-  for (const id of [
+function fillTournamentSelects() {
+  const ids = [
     "roomTournament",
     "resultTournament",
     "feeTournament"
-  ]) {
-    const select = $("#" + id);
+  ];
+
+  for (const id of ids) {
+    const select = document.getElementById(id);
     if (!select) continue;
 
+    const previousValue = select.value;
     select.replaceChildren();
 
-    const firstOption = document.createElement("option");
-    firstOption.value = "";
-    firstOption.textContent = "Tournament নির্বাচন করো";
-    select.append(firstOption);
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "Tournament নির্বাচন করো";
+    select.append(first);
 
-    for (const t of tournamentsCache) {
+    for (const tournament of tournamentsCache) {
       const option = document.createElement("option");
-      option.value = t.id;
-      option.textContent = t.title || "Tournament";
+      option.value = tournament.id;
+      option.textContent = tournament.title || "Tournament";
       select.append(option);
     }
+
+    if (previousValue) select.value = previousValue;
   }
 }
 
-// ---------- Join Modal ----------
+// ============================================
+// TOURNAMENT JOIN
+// ============================================
 
 function openJoinModal(tournament) {
   if (!currentUser) {
-    toast("Join করতে আগে Login করো।");
+    toast("Tournament-এ Join করতে আগে Login করো।");
     setAuthMode("login");
     return;
   }
 
   selectedTournament = tournament;
 
-  const modal = $("#joinModal");
+  const modal = byId("joinModal", "join-modal");
+
   if (!modal) {
-    toast("Join form পাওয়া যায়নি। index.html পরীক্ষা করো।");
+    toast("Join form পাওয়া যায়নি। index.html পরীক্ষা করতে হবে।");
     return;
   }
 
-  const title = $("#joinTournamentTitle");
-  if (title) {
-    title.textContent = tournament.title || "Tournament";
-  }
+  const title = byId("joinTournamentTitle", "join-tournament-title");
+  const fee = byId("joinEntryFee", "join-entry-fee");
 
-  const fee = $("#joinEntryFee");
-  if (fee) {
-    fee.textContent = money(tournament.entryFee || 0);
-  }
+  if (title) title.textContent = tournament.title || "Tournament";
+  if (fee) fee.textContent = money(tournament.entryFee || 0);
 
   modal.hidden = false;
-}// ---------- Close Join Modal ----------
-
-$("#closeJoinModal")?.addEventListener("click", () => {
-  const modal = $("#joinModal");
-  if (modal) modal.hidden = true;
-});
-
-$("#cancelJoin")?.addEventListener("click", () => {
-  const modal = $("#joinModal");
-  if (modal) modal.hidden = true;
-});
-
-// ---------- Tournament Join Form ----------
-
-$("#joinForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!currentUser) {
-    toast("আগে Login করো।");
-    return;
-  }
-
-  if (!selectedTournament) {
-    toast("একটি Tournament নির্বাচন করো।");
-    return;
-  }
-
-  const playerName = value("playerName");
-  const gameUid = value("gameUid");
-  const teamName = value("teamName");
-
-  if (!playerName || !gameUid) {
-    toast("Player Name এবং Game UID দাও।");
-    return;
-  }
-
-  const submitButton = $("#joinSubmit");
-  if (submitButton) submitButton.disabled = true;
-
-  try {
-    const tournamentId = selectedTournament.id;
-    const user = currentUser;
-
-    const registrationId = `${tournamentId}_${user.uid}`;
-    const registrationRef = doc(
-      db,
-      "tournamentRegistrations",
-      registrationId
-    );
-
-    const tournamentRef = doc(db, "tournaments", tournamentId);
-    const walletRef = doc(db, "demoWallet", user.uid);
-
-    await runTransaction(db, async (transaction) => {
-      const tournamentSnap = await transaction.get(tournamentRef);
-
-      if (!tournamentSnap.exists()) {
-        throw new Error("এই Tournament আর পাওয়া যাচ্ছে না।");
-      }
-
-      const tournament = tournamentSnap.data();
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          tournament,
-          "entryFeeConfirmed"
-        ) &&
-        tournament.entryFeeConfirmed !== true
-      ) {
-        throw new Error(
-          "Admin এখনো Entry Fee নিশ্চিত করেননি।"
-        );
-      }
-
-      const existingRegistration = await transaction.get(
-        registrationRef
-      );
-
-      if (existingRegistration.exists()) {
-        throw new Error("তুমি ইতিমধ্যে এই Tournament-এ Join করেছ।");
-      }
-
-      const fee = Number(tournament.entryFee || 0);// ---------- Admin: Create Tournament ----------
-
-$("#createTournamentForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!(await requireAdmin())) return;
-
-  const title = value("tournamentTitle");
-  const mode = value("tournamentMode");
-  const map = value("tournamentMap");
-  const prizeText = value("tournamentPrize");
-  const startTime = value("tournamentStart");
-
-  if (!title) {
-    toast("Tournament-এর নাম লিখো।");
-    return;
-  }
-
-  try {
-    await addDoc(collection(db, "tournaments"), {
-      title,
-      mode,
-      map,
-      prizeText,
-      startTime,
-      entryFee: 0,
-      entryFeeConfirmed: true,
-      createdBy: currentUser.uid,
-      createdAt: serverTimestamp(),
-      status: "open"
-    });
-
-    $("#createTournamentForm").reset();
-    toast("নতুন Tournament তৈরি হয়েছে।");
-
-    await loadTournaments();
-  } catch (error) {
-    console.error("Create Tournament:", error);
-    toast(error.message || "Tournament তৈরি হয়নি।");
-  }
-});
-
-
-// ---------- Admin: Set and Confirm Entry Fee ----------
-
-$("#feeForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!(await requireAdmin())) return;
-
-  const tournamentId = value("feeTournament");
-  const fee = Number(value("entryFeeAmount"));
-
-  if (!tournamentId) {
-    toast("Tournament নির্বাচন করো।");
-    return;
-  }
-
-  if (!Number.isFinite(fee) || fee < 0) {
-    toast("Entry Fee শূন্য বা তার বেশি হতে হবে।");
-    return;
-  }
-
-  try {
-    const tournamentRef = doc(db, "tournaments", tournamentId);
-
-    await setDoc(tournamentRef, {
-      entryFee: fee,
-      entryFeeConfirmed: true,
-      entryFeeConfirmedBy: currentUser.uid,
-      entryFeeConfirmedAt: serverTimestamp(),
-      paymentMethod: fee > 0 ? "demo-wallet" : "free"
-    }, { merge: true });
-
-    toast(
-      fee > 0
-        ? `Entry Fee ${money(fee)} নির্ধারণ ও নিশ্চিত হয়েছে।`
-        : "Tournament Free হিসেবে নিশ্চিত হয়েছে।"
-    );
-
-    $("#feeForm").reset();
-
-    await loadTournaments();
-  } catch (error) {
-    console.error("Set Entry Fee:", error);
-    toast(error.message || "Entry Fee সংরক্ষণ হয়নি।");
-  }
-});
-
-
-// ---------- Admin: Load Tournament Registrations ----------
-
-async function loadAdminRegistrations() {
-  const container = $("#adminRegistrations");
-  if (!container) return;
-
-  if (!(await requireAdmin())) return;
-
-  try {
-    const snap = await getDocs(
-      collection(db, "tournamentRegistrations")
-    );
-
-    container.replaceChildren();
-
-    if (snap.empty) {
-      container.textContent = "এখনো কোনো Registration নেই।";
-      return;
-    }
-
-    snap.forEach((registrationDoc) => {
-      const data = registrationDoc.data// ---------- Admin: View Demo Payment Requests ----------
-
-async function loadAdminDemoRequests() {
-  const container = $("#adminDemoRequests");
-  if (!container) return;
-
-  if (!(await requireAdmin())) return;
-
-  try {
-    const snap = await getDocs(
-      query(
-        collection(db, "demoPaymentRequests"),
-        orderBy("createdAt", "desc")
-      )
-    );
-
-    container.replaceChildren();
-
-    if (snap.empty) {
-      container.textContent = "কোনো Demo Payment Request নেই।";
-      return;
-    }
-
-    snap.forEach((requestDoc) => {
-      const data = requestDoc.data();
-
-      const card = document.createElement("div");
-      card.className = "admin-request-card";
-
-      const details = document.createElement("p");
-      details.textContent =
-        `${money(data.amount)} | ${data.method || "Demo"} | ` +
-        `Transaction ID: ${data.transactionId || "—"} | ` +
-        `Status: ${data.status || "pending"}`;
-
-      const user = document.createElement("p");
-      user.textContent =
-        `User: ${data.email || data.userId || "—"}`;
-
-      card.append(details, user);
-      container.append(card);
-    });
-  } catch (error) {
-    console.error("Admin Demo Requests:", error);
-    container.textContent =
-      "Request লোড হয়নি। Firestore Rules পরীক্ষা করো।";
-  }
 }
 
-
-// ---------- Admin: Adjust Demo Wallet Balance ----------
-// এটি শুধু পরীক্ষামূলক ব্যালেন্স। বাস্তব টাকা নয়.
-
-$("#adminWalletForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!(await requireAdmin())) return;
-
-  const userId = value("walletUserId");
-  const amount = Number(value("walletAmount"));
-  const action = value("walletAction");
-
-  if (!userId) {
-    toast("User UID লিখো।");
-    return;
+byId("closeJoinModal", "close-join-modal")?.addEventListener(
+  "click",
+  () => {
+    const modal = byId("joinModal", "join-modal");
+    if (modal) modal.hidden = true;
   }
+);
 
-  if (!Number.isFinite(amount) || amount <= 0) {
-    toast("সঠিক Amount লিখো।");
-    return;
-  }
+byId("cancelJoin", "cancel-join")?.addEventListener("click", () => {
+  const modal = byId("joinModal", "join-modal");
+  if (modal) modal.hidden = true;
+});
 
-  if (!["add", "subtract"].includes(action)) {
-    toast("Add অথবা Subtract নির্বাচন করো।");
-    return;
-  }
-
-  try {
-    const walletRef = doc(db, "demoWallet", userId);
-
-    await runTransaction(db, async (transaction) => {
-      const walletSnap = await transaction.get(walletRef);
-
-      const oldBalance = walletSnap.exists()
-        ? Number(walletSnap.data().balance || 0)
-        : 0;
-
-      const newBalance =
-        action === "add"
-          ? oldBalance + amount
-          : oldBalance - amount;
-
-      if (newBalance < 0) {
-        throw new Error("Balance শূন্যের নিচে হতে পারবে না।");
-      }
-
-      if (walletSnap.exists()) {
-        transaction.update(walletRef, {
-          balance: newBalance,
-          updatedAt: serverTimestamp
+const joinForm =
