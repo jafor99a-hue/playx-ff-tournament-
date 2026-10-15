@@ -900,4 +900,3 @@ $("room-form").addEventListener(
       $("room-id").value = "";
       $("room-password").value = "";
 
-                                
