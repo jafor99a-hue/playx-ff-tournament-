@@ -1,4 +1,3 @@
-
 import app from "./firebase-config.js";
 
 import {
@@ -7,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 import {
@@ -22,7 +21,7 @@ import {
   where,
   orderBy,
   runTransaction,
-  serverTimestamp
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const auth = getAuth(app);
@@ -83,8 +82,7 @@ function setAuthMode(mode) {
   const submit = $("#authSubmit");
 
   if (nameWrap) nameWrap.hidden = mode !== "register";
-  if (submit) submit.textContent =
-    mode === "register" ? "Register" : "Login";
+  if (submit) submit.textContent = mode === "register" ? "Register" : "Login";
 
   const password = $("#password");
   if (password) {
@@ -115,7 +113,9 @@ $("#authForm")?.addEventListener("submit", async (event) => {
       }
 
       const credential = await createUserWithEmailAndPassword(
-        auth, email, password
+        auth,
+        email,
+        password
       );
 
       if (displayName) {
@@ -182,9 +182,9 @@ async function loadTournaments() {
       query(collection(db, "tournaments"), orderBy("createdAt", "desc"))
     );
 
-    tournamentsCache = snap.docs.map(d => ({
+    tournamentsCache = snap.docs.map((d) => ({
       id: d.id,
-      ...d.data()
+      ...d.data(),
     }));
 
     container.replaceChildren();
@@ -201,8 +201,7 @@ async function loadTournaments() {
       heading.textContent = t.title || "Tournament";
 
       const info = document.createElement("p");
-      info.textContent =
-        `Mode: ${t.mode || "—"} · Map: ${t.map || "—"} · Prize: ${t.prizeText || "—"}`;
+      info.textContent = `Mode: ${t.mode || "—"} · Map: ${ t.map || "—" } · Prize: ${t.prizeText || "—"}`;
 
       const start = document.createElement("p");
       start.textContent = "শুরু: " + (t.startTime || "সময় নির্ধারিত নয়");
@@ -305,7 +304,7 @@ $("#joinForm")?.addEventListener("submit", async (event) => {
       ffuid,
       teamName,
       status: "joined",
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     $("#joinModal").hidden = true;
@@ -348,9 +347,7 @@ async function loadRooms() {
 
     for (const registration of registrations.docs) {
       const data = registration.data();
-      const roomSnap = await getDoc(
-        doc(db, "roomDetails", data.tournamentId)
-      );
+      const roomSnap = await getDoc(doc(db, "roomDetails", data.tournamentId));
 
       const card = document.createElement("article");
       card.className = "room-card";
@@ -360,20 +357,19 @@ async function loadRooms() {
 
       const room = document.createElement("p");
       const roomData = roomSnap.exists() ? roomSnap.data() : {};
-      room.textContent = "Room ID: " +
-        (roomData.roomId || "এখনো প্রকাশিত হয়নি");
+      room.textContent =
+        "Room ID: " + (roomData.roomId || "এখনো প্রকাশিত হয়নি");
 
       const pass = document.createElement("p");
-      pass.textContent = "Room Password: " +
-        (roomData.roomPassword || "এখনো প্রকাশিত হয়নি");
+      pass.textContent =
+        "Room Password: " + (roomData.roomPassword || "এখনো প্রকাশিত হয়নি");
 
       card.append(heading, room, pass);
       container.append(card);
     }
   } catch (error) {
     console.error("loadRooms:", error);
-    container.textContent =
-      "Room লোড হয়নি। Firestore Rules পরীক্ষা করো।";
+    container.textContent = "Room লোড হয়নি। Firestore Rules পরীক্ষা করো।";
   }
 }
 
@@ -403,7 +399,7 @@ $("#tournamentForm")?.addEventListener("submit", async (event) => {
       prizeText,
       startTime,
       status: "Open",
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     $("#tournamentForm").reset();
@@ -436,7 +432,7 @@ $("#roomForm")?.addEventListener("submit", async (event) => {
       tournamentId,
       roomId,
       roomPassword,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
 
     $("#roomForm").reset();
@@ -457,7 +453,7 @@ $("#resultForm")?.addEventListener("submit", async (event) => {
     if (!(await requireAdmin())) return;
 
     const tournamentId = value("resultTournament");
-    const tournament = tournamentsCache.find(t => t.id === tournamentId);
+    const tournament = tournamentsCache.find((t) => t.id === tournamentId);
     const winner = value("winner");
     const description = value("resultDetails");
 
@@ -471,7 +467,7 @@ $("#resultForm")?.addEventListener("submit", async (event) => {
       tournamentName: tournament?.title || "Tournament",
       winner,
       description,
-      publishedAt: serverTimestamp()
+      publishedAt: serverTimestamp(),
     });
 
     $("#resultForm").reset();
@@ -508,12 +504,12 @@ async function loadResults() {
       const row = body.insertRow();
 
       row.insertCell().textContent = data.tournamentName || "Tournament";
-      row.insertCell().textContent =
-        [data.winner, data.description].filter(Boolean).join(" — ");
+      row.insertCell().textContent = [data.winner, data.description]
+        .filter(Boolean)
+        .join(" — ");
 
       const date = data.publishedAt?.toDate?.();
-      row.insertCell().textContent =
-        date ? date.toLocaleString("bn-BD") : "—";
+      row.insertCell().textContent = date ? date.toLocaleString("bn-BD") : "—";
     }
   } catch (error) {
     console.error("loadResults:", error);
@@ -607,9 +603,7 @@ function setupDemoWalletControls() {
 
       await runTransaction(db, async (transaction) => {
         const snap = await transaction.get(ref);
-        const oldBalance = snap.exists()
-          ? Number(snap.data().balance || 0)
-          : 0;
+        const oldBalance = snap.exists() ? Number(snap.data().balance || 0) : 0;
 
         if (!snap.exists() && direction < 0) {
           throw new Error("Wallet নেই; Balance কমানো যাবে না।");
@@ -621,11 +615,15 @@ function setupDemoWalletControls() {
           throw new Error("Demo Balance শূন্যের নিচে হতে পারবে না।");
         }
 
-        transaction.set(ref, {
-          uid,
-          balance: newBalance,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+        transaction.set(
+          ref,
+          {
+            uid,
+            balance: newBalance,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
       });
 
       if (result) result.textContent = "Demo Balance আপডেট হয়েছে।";
@@ -698,7 +696,7 @@ $("#demo-payment-form")?.addEventListener("submit", async (event) => {
       amount,
       transactionId: txid,
       status: "demo-pending",
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     if (message) {
@@ -723,10 +721,7 @@ async function loadDemoPaymentRequests() {
     if (!(await requireAdmin())) return;
 
     const snap = await getDocs(
-      query(
-        collection(db, "demoPaymentRequests"),
-        orderBy("createdAt", "desc")
-      )
+      query(collection(db, "demoPaymentRequests"), orderBy("createdAt", "desc"))
     );
 
     body.replaceChildren();
