@@ -1,3 +1,4 @@
+JavaScript
 
 import app from "./firebase-config.js";
 
@@ -898,5 +899,4 @@ $("room-form").addEventListener(
       if (t) t.roomSet = true;
 
       $("room-id").value = "";
-      $("room-password").value = "";
-
+      $("room-password").va
