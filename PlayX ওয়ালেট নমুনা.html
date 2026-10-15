@@ -1,0 +1,410 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PlayX ওয়ালেট নমুনা</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,700&family=Hind+Siliguri:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky top bar with role switch, tab bar, one working screen per tab (home, wallet, admin, support). Dark single theme, same tokens as the PlayX demo. */
+:root {
+  --bg: #070c1a;
+  --surface: #0d1630;
+  --surface-2: #131f42;
+  --line: #22305c;
+  --fg: #eaf0ff;
+  --muted: #8e9bc4;
+  --blue: #2f7bff;
+  --blue-deep: #1c5bd6;
+  --yellow: #ffc928;
+  --green: #2fd27a;
+  --red: #ff5a5f;
+  --wa: #25d366;
+  --f-display: 'Chakra Petch', 'Hind Siliguri', system-ui, sans-serif;
+  --f-body: 'Hind Siliguri', 'Chakra Petch', system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.55; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 96px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; line-height: 1.2; text-wrap: balance; }
+.wrap { max-width: 980px; margin-inline: auto; }
+.num { font-family: var(--f-display); font-variant-numeric: tabular-nums; }
+
+.demo-note { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
+.demo-note b { color: var(--yellow); }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(7,12,26,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding-block: 10px; }
+.logo { font-family: var(--f-display); font-weight: 700; font-style: italic; font-size: 1.5rem; line-height: 1; display: inline-flex; flex-direction: column; }
+.logo b { color: var(--blue); }
+.logo small { font-size: .5rem; letter-spacing: .2em; font-style: normal; color: var(--yellow); margin-top: 2px; }
+.who { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { background: transparent; border: 0; padding: 6px 12px; color: var(--muted); font-weight: 600; }
+.seg button[aria-pressed="true"] { background: var(--blue); color: #fff; }
+.chip-bal { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-weight: 600; }
+.chip-bal .num { color: var(--yellow); }
+
+.tabs { display: flex; gap: 4px; overflow-x: auto; padding-block: 12px 4px; }
+.tabs button { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px 14px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); background: var(--surface); border-color: var(--line); }
+.tabs .dot { display: inline-block; min-width: 18px; height: 18px; padding-inline: 5px; border-radius: 9px; background: var(--red); color: #fff; font-size: .72rem; line-height: 18px; text-align: center; margin-left: 6px; }
+
+.screen { padding-block: 18px; display: grid; gap: 18px; }
+.eyebrow { font-family: var(--f-display); font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; color: var(--yellow); font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.muted { color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 6px; padding: 9px 16px; font-weight: 600; background: var(--blue); color: #fff; }
+.btn:hover { background: var(--blue-deep); }
+.btn.yellow { background: var(--yellow); color: #1a1500; }
+.btn.yellow:hover { background: #ffd54f; }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--fg); }
+.btn.ghost:hover { border-color: var(--blue); }
+.btn.green { background: var(--green); color: #04210f; }
+.btn.red { background: transparent; border-color: var(--red); color: var(--red); }
+.btn.sm { padding: 6px 12px; font-size: .9rem; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.wa { background: var(--wa); color: #04210f; }
+
+/* balance */
+.bal { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; background: linear-gradient(135deg, var(--surface-2), var(--surface)); }
+.bal .big { font-size: clamp(2.2rem, 8vw, 3.2rem); font-weight: 700; color: var(--yellow); line-height: 1; }
+.bal .acts { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* tournaments */
+.tgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.t h3 { font-size: 1.1rem; }
+.badge { display: inline-block; font-family: var(--f-display); font-size: .7rem; font-weight: 700; letter-spacing: .08em; padding: 2px 8px; border-radius: 4px; color: #fff; }
+.b-solo { background: #7a4dff; } .b-duo { background: #d03ea1; } .b-squad { background: var(--blue-deep); }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-block: 12px; font-size: .92rem; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; text-align: right; font-weight: 600; }
+.bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--blue); }
+.joined-tag { color: var(--green); font-weight: 600; }
+
+/* forms */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 6px 16px; font-weight: 600; color: var(--muted); }
+.chips button[aria-pressed="true"] { border-color: var(--yellow); color: var(--yellow); }
+.field { display: grid; gap: 6px; margin-bottom: 12px; font-weight: 500; font-size: .95rem; }
+.field input { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%; }
+.field input:focus { border-color: var(--blue); outline: none; }
+.field small { color: var(--muted); font-weight: 400; }
+.paybox { background: var(--surface-2); border: 1px dashed var(--yellow); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+.paybox .n { font-size: 1.5rem; font-weight: 700; letter-spacing: .04em; }
+.msg { border-radius: 6px; padding: 10px 12px; font-size: .92rem; margin-top: 10px; }
+.msg.ok { background: rgba(47,210,122,.12); border: 1px solid var(--green); color: var(--green); }
+.msg.err { background: rgba(255,90,95,.12); border: 1px solid var(--red); color: var(--red); }
+.hidden-sheet { margin-top: 4px; }
+
+/* lists */
+.list { display: grid; gap: 8px; }
+.item { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; min-width: 0; }
+.item .l { min-width: 0; overflow-wrap: anywhere; }
+.item small { color: var(--muted); display: block; }
+.amt.pos { color: var(--green); } .amt.neg { color: var(--red); }
+.pill { font-size: .78rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid; }
+.p-pending { color: var(--yellow); border-color: var(--yellow); }
+.p-ok { color: var(--green); border-color: var(--green); }
+.p-no { color: var(--red); border-color: var(--red); }
+.inline-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.empty { color: var(--muted); padding: 14px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 1.7rem; font-family: var(--f-display); }
+.stat span { color: var(--muted); font-size: .9rem; }
+.sub { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.sub button { background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; color: var(--muted); font-weight: 600; }
+.sub button[aria-pressed="true"] { border-color: var(--blue); color: var(--fg); background: var(--surface-2); }
+
+details { border-bottom: 1px solid var(--line); padding-block: 10px; }
+details summary { cursor: pointer; font-weight: 600; }
+details p { margin: 8px 0 0; color: var(--muted); }
+
+/* floating WhatsApp */
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); z-index: 30; display: inline-flex; align-items: center; gap: 8px; background: var(--wa); color: #04210f; font-weight: 700; padding: 12px 18px; border-radius: 999px; text-decoration: none; box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(76px, calc(env(safe-area-inset-bottom, 0px) + 76px)); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; z-index: 40; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .bar i { transition: width .4s; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <span class="logo">Play<b>X</b><small>FF TOURNAMENT</small></span>
+    <div class="who">
+      <span class="chip-bal" id="chipBal" title="ওয়ালেট ব্যালেন্স">ব্যালেন্স <span class="num" id="chipBalNum">৳০</span></span>
+      <div class="seg" role="group" aria-label="দেখার ধরন">
+        <button type="button" id="roleUser" aria-pressed="true">ইউজার</button>
+        <button type="button" id="roleAdmin" aria-pressed="false">অ্যাডমিন</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="demo-note"><b>নমুনা।</b> এখানে আসল টাকা লেনদেন হয় না, সব তথ্য শুধু এই পেজে থাকে। উপরের "অ্যাডমিন" বাটনে চাপ দিলে অ্যাডমিন যে পেজগুলো দেখবে সেগুলো দেখা যাবে। ধাপগুলো পরপর চালিয়ে দেখুন: টাকা অ্যাড করুন, অ্যাডমিন হিসেবে অ্যাপ্রুভ করুন, তারপর জয়েন করুন।</div>
+
+  <nav class="tabs" role="tablist" aria-label="মেনু" id="tabs"></nav>
+  <section class="screen" id="screen" aria-live="polite"></section>
+</main>
+
+<a class="fab" id="fab" href="https://wa.me/8801346022330?text=%E0%A6%86%E0%A6%B8%E0%A6%B8%E0%A6%BE%E0%A6%B2%E0%A6%BE%E0%A6%AE%E0%A7%81%20%E0%A6%86%E0%A6%B2%E0%A6%BE%E0%A6%87%E0%A6%95%E0%A7%81%E0%A6%AE%2C%20PlayX%20FF%20Tournament%20%E0%A6%B8%E0%A6%AE%E0%A7%8D%E0%A6%AA%E0%A6%B0%E0%A7%8D%E0%A6%95%E0%A7%87%20%E0%A6%B8%E0%A6%BE%E0%A6%B9%E0%A6%BE%E0%A6%AF%E0%A7%8D%E0%A6%AF%20%E0%A6%A6%E0%A6%B0%E0%A6%95%E0%A6%BE%E0%A6%B0%E0%A5%A4" target="_blank" rel="noopener noreferrer">হোয়াটসঅ্যাপে সাপোর্ট</a>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  var PAY_NUMBER = '01346022330', WA_DISPLAY = '01346022330', MIN_DEP = 20, MIN_WD = 100;
+  var BN = '০১২৩৪৫৬৭৮৯';
+  function bn(n) { return String(n).replace(/[0-9]/g, function (d) { return BN[+d]; }); }
+  function tk(n) { return '৳' + bn(Number(n).toLocaleString('en-US')); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var MN = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket' };
+  var TX = { deposit: 'ডিপোজিট', withdraw: 'উইথড্র', withdraw_refund: 'উইথড্র ফেরত', entry_fee: 'এন্ট্রি ফি', entry_refund: 'ফি ফেরত', prize: 'প্রাইজ' };
+
+  // Example data (marked as demo above)
+  var S = {
+    role: 'user', tab: 'home', balance: 50, nextId: 10,
+    tournaments: [
+      { id: 1, title: 'PlayX Solo Rush', mode: 'solo', map: 'Bermuda', prize: 1000, fee: 20, slots: 60, filled: 41, when: 'আজ রাত ৯:০০', joined: false },
+      { id: 2, title: 'PlayX Duo Clash', mode: 'duo', map: 'Purgatory', prize: 2500, fee: 40, slots: 28, filled: 19, when: 'কাল রাত ৮:৩০', joined: false },
+      { id: 3, title: 'PlayX Squad War', mode: 'squad', map: 'Kalahari', prize: 5000, fee: 100, slots: 24, filled: 24, when: 'শুক্রবার রাত ৯:০০', joined: false },
+      { id: 4, title: 'PlayX Weekend Cup', mode: 'squad', map: 'Bermuda', prize: 3000, fee: 60, slots: 24, filled: 11, when: 'শনিবার রাত ৮:০০', joined: false }
+    ],
+    ledger: [{ type: 'deposit', amount: 50, after: 50, note: 'নমুনা ডিপোজিট' }],
+    deposits: [
+      { id: 1, user: 'rakib_ff', method: 'bkash', amount: 100, sender: '01711223344', trx: 'BK8H2L9QXA', status: 'pending' },
+      { id: 2, user: 'sumon99', method: 'nagad', amount: 200, sender: '01822334455', trx: 'NG5T7P1MZC', status: 'pending' }
+    ],
+    withdrawals: [
+      { id: 1, user: 'tanvir_x', method: 'bkash', amount: 300, receiver: '01933445566', status: 'pending' }
+    ],
+    confirm: null, form: { method: 'bkash' }, sheet: null, adminTab: 'dep', toastT: 0
+  };
+
+  function toast(t) {
+    var el = document.getElementById('toast');
+    el.textContent = t; el.hidden = false;
+    clearTimeout(S.toastT);
+    S.toastT = setTimeout(function () { el.hidden = true; }, 2800);
+  }
+  function copy(text) {
+    var done = function () { toast('কপি হয়েছে: ' + text); };
+    try { navigator.clipboard.writeText(text).then(done, function () { toast(text); }); } catch (e) { toast(text); }
+  }
+  function ledger(type, amount, note) {
+    S.balance += amount;
+    S.ledger.unshift({ type: type, amount: amount, after: S.balance, note: note });
+  }
+  function pendingCount() {
+    return S.deposits.filter(function (d) { return d.status === 'pending'; }).length +
+      S.withdrawals.filter(function (w) { return w.status === 'pending'; }).length;
+  }
+
+  function tabsFor() {
+    var t = [['home', 'হোম'], ['wallet', 'ওয়ালেট'], ['support', 'সাপোর্ট']];
+    if (S.role === 'admin') t.push(['admin', 'অ্যাডমিন']);
+    return t;
+  }
+  function renderTabs() {
+    var h = '';
+    tabsFor().forEach(function (t) {
+      var dot = (t[0] === 'admin' && pendingCount() > 0) ? '<span class="dot">' + bn(pendingCount()) + '</span>' : '';
+      h += '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + dot + '</button>';
+    });
+    document.getElementById('tabs').innerHTML = h;
+    document.getElementById('chipBalNum').textContent = tk(S.balance);
+    document.getElementById('roleUser').setAttribute('aria-pressed', S.role === 'user');
+    document.getElementById('roleAdmin').setAttribute('aria-pressed', S.role === 'admin');
+  }
+
+  /* ---------- screens ---------- */
+  function homeScreen() {
+    var h = '<div><span class="eyebrow">টুর্নামেন্ট</span><h2>জয়েন করুন, এন্ট্রি ফি ওয়ালেট থেকে কাটা হবে</h2></div><div class="tgrid">';
+    S.tournaments.forEach(function (t) {
+      var full = t.filled >= t.slots, pct = Math.round(t.filled / t.slots * 100);
+      var btn;
+      if (t.joined) btn = '<div class="joined-tag">✓ জয়েন সম্পন্ন, স্লট কনফার্ম</div>';
+      else if (full) btn = '<button class="btn ghost" disabled>স্লট শেষ</button>';
+      else if (S.balance < t.fee) btn = '<button class="btn yellow" data-act="goadd">ব্যালেন্স কম, টাকা অ্যাড করুন</button>';
+      else if (S.confirm === 'join' + t.id) btn = '<div class="inline-actions"><button class="btn green" data-act="join-yes" data-id="' + t.id + '">হ্যাঁ, ' + tk(t.fee) + ' কাটুন</button><button class="btn ghost" data-act="cancel">না</button></div>';
+      else btn = '<button class="btn" data-act="join" data-id="' + t.id + '">জয়েন করুন</button>';
+      h += '<article class="card t"><div class="row"><span class="badge b-' + t.mode + '">' + t.mode.toUpperCase() + '</span><span class="muted">' + esc(t.when) + '</span></div>' +
+        '<h3 style="margin-top:10px">' + esc(t.title) + '</h3>' +
+        '<dl class="facts"><dt>ম্যাপ</dt><dd>' + esc(t.map) + '</dd><dt>প্রাইজ পুল</dt><dd class="num">' + tk(t.prize) + '</dd><dt>এন্ট্রি ফি</dt><dd class="num" style="color:var(--yellow)">' + tk(t.fee) + '</dd></dl>' +
+        '<div class="row" style="margin-bottom:6px"><span class="muted">স্লট</span><span class="num">' + bn(t.filled) + '/' + bn(t.slots) + '</span></div>' +
+        '<div class="bar" role="img" aria-label="' + pct + '% ভর্তি"><i style="width:' + pct + '%"></i></div>' +
+        '<div style="margin-top:14px">' + btn + '</div></article>';
+    });
+    return h + '</div><p class="muted">প্রতিটি টুর্নামেন্টে এন্ট্রি ফি লাগে। ব্যালেন্স না থাকলে আগে ওয়ালেটে টাকা অ্যাড করতে হবে।</p>';
+  }
+
+  function methodChips(id) {
+    return '<div class="chips" id="' + id + '" role="group" aria-label="পেমেন্ট মাধ্যম">' +
+      ['bkash', 'nagad', 'rocket'].map(function (m) { return '<button type="button" data-method="' + m + '" aria-pressed="' + (S.form.method === m) + '">' + MN[m] + '</button>'; }).join('') + '</div>';
+  }
+
+  function addForm() {
+    return '<div class="card"><h3>টাকা অ্যাড করুন</h3><p class="muted" style="margin:6px 0 14px">আপনার পছন্দের মাধ্যম বেছে নিন, নিচের নম্বরে Send Money করুন, তারপর ফর্ম পূরণ করুন।</p>' +
+      methodChips('mchips') +
+      '<div class="paybox" style="margin-top:14px"><div class="muted">' + MN[S.form.method] + ' পার্সোনাল নম্বর (Send Money)</div><div class="row"><span class="n num" id="payNum">' + bn(PAY_NUMBER) + '</span><button class="btn sm ghost" type="button" data-act="copynum">কপি</button></div></div>' +
+      '<form id="addForm" novalidate><div class="field"><label for="dAmt">টাকার পরিমাণ</label><input id="dAmt" inputmode="numeric" autocomplete="off" placeholder="যেমন ১০০"><small>সর্বনিম্ন ' + tk(MIN_DEP) + ', সর্বোচ্চ ' + tk(50000) + '</small></div>' +
+      '<div class="chips" style="margin:-4px 0 12px">' + [50, 100, 200, 500].map(function (v) { return '<button type="button" data-quick="' + v + '">' + tk(v) + '</button>'; }).join('') + '</div>' +
+      '<div class="field"><label for="dSender">যে নম্বর থেকে পাঠিয়েছেন</label><input id="dSender" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="01XXXXXXXXX"></div>' +
+      '<div class="field"><label for="dTrx">TrxID</label><input id="dTrx" autocomplete="off" maxlength="20" placeholder="যেমন BK8H2L9QXA" style="text-transform:uppercase"><small>৬ থেকে ২০টি অক্ষর বা সংখ্যা</small></div>' +
+      '<button class="btn yellow" type="submit">অনুরোধ পাঠান</button><div id="addMsg"></div></form></div>';
+  }
+  function wdForm() {
+    return '<div class="card"><h3>টাকা উইথড্র করুন</h3><p class="muted" style="margin:6px 0 14px">আপনার ব্যালেন্স: <b class="num" style="color:var(--yellow)">' + tk(S.balance) + '</b>। অনুরোধ করলেই টাকা ওয়ালেট থেকে আটকে যায়, অ্যাডমিন পাঠিয়ে দিলে কাজ শেষ।</p>' +
+      methodChips('wchips') +
+      '<form id="wdForm" novalidate style="margin-top:14px"><div class="field"><label for="wAmt">টাকার পরিমাণ</label><input id="wAmt" inputmode="numeric" autocomplete="off" placeholder="যেমন ১০০"><small>সর্বনিম্ন ' + tk(MIN_WD) + '</small></div>' +
+      '<div class="field"><label for="wRecv">প্রাপকের নম্বর</label><input id="wRecv" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="01XXXXXXXXX"></div>' +
+      '<button class="btn" type="submit">উইথড্র অনুরোধ</button><div id="wdMsg"></div></form></div>';
+  }
+  function statusPill(s) { return s === 'pending' ? '<span class="pill p-pending">যাচাই চলছে</span>' : s === 'approved' ? '<span class="pill p-ok">সফল</span>' : '<span class="pill p-no">বাতিল</span>'; }
+
+  function walletScreen() {
+    var h = '<div class="card bal"><div><div class="muted">ওয়ালেট ব্যালেন্স</div><div class="big num">' + tk(S.balance) + '</div></div>' +
+      '<div class="acts"><button class="btn yellow" data-sheet="add">টাকা অ্যাড করুন</button><button class="btn ghost" data-sheet="wd">টাকা উইথড্র</button></div></div>';
+    if (S.sheet === 'add') h += addForm();
+    if (S.sheet === 'wd') h += wdForm();
+    h += '<div class="card"><h3 style="margin-bottom:12px">লেনদেন</h3><div class="list">';
+    if (!S.ledger.length) h += '<div class="empty">এখনো কোনো লেনদেন নেই।</div>';
+    S.ledger.forEach(function (l) {
+      h += '<div class="item"><div class="l"><b>' + TX[l.type] + '</b><small>' + esc(l.note) + '</small></div><div style="text-align:right"><div class="num amt ' + (l.amount > 0 ? 'pos' : 'neg') + '">' + (l.amount > 0 ? '+' : '−') + tk(Math.abs(l.amount)) + '</div><small>ব্যালেন্স ' + tk(l.after) + '</small></div></div>';
+    });
+    h += '</div></div>';
+    var mine = S.deposits.filter(function (d) { return d.user === 'আপনি'; });
+    var mw = S.withdrawals.filter(function (w) { return w.user === 'আপনি'; });
+    h += '<div class="grid2"><div class="card"><h3 style="margin-bottom:12px">আমার ডিপোজিট অনুরোধ</h3><div class="list">' +
+      (mine.length ? mine.map(function (d) { return '<div class="item"><div class="l"><b class="num">' + tk(d.amount) + '</b> · ' + MN[d.method] + '<small>TrxID ' + esc(d.trx) + '</small></div>' + statusPill(d.status) + '</div>'; }).join('') : '<div class="empty">কোনো অনুরোধ নেই।</div>') +
+      '</div></div><div class="card"><h3 style="margin-bottom:12px">আমার উইথড্র অনুরোধ</h3><div class="list">' +
+      (mw.length ? mw.map(function (w) { return '<div class="item"><div class="l"><b class="num">' + tk(w.amount) + '</b> · ' + MN[w.method] + '<small>' + bn(w.receiver) + '</small></div>' + statusPill(w.status) + '</div>'; }).join('') : '<div class="empty">কোনো অনুরোধ নেই।</div>') +
+      '</div></div></div>';
+    return h;
+  }
+
+  function adminScreen() {
+    var pd = S.deposits.filter(function (d) { return d.status === 'pending'; }).length;
+    var pw = S.withdrawals.filter(function (w) { return w.status === 'pending'; }).length;
+    var total = S.balance + 1840;
+    var h = '<div><span class="eyebrow">অ্যাডমিন প্যানেল</span><h2>সব লেনদেন আপনার নিয়ন্ত্রণে</h2></div>' +
+      '<div class="stats"><div class="card stat"><b>' + bn(pd) + '</b><span>পেন্ডিং ডিপোজিট</span></div><div class="card stat"><b>' + bn(pw) + '</b><span>পেন্ডিং উইথড্র</span></div><div class="card stat"><b>' + bn(128) + '</b><span>মোট ইউজার (নমুনা)</span></div><div class="card stat"><b class="num">' + tk(total) + '</b><span>মোট ওয়ালেট ব্যালেন্স (নমুনা)</span></div></div>';
+    h += '<div class="card"><div class="sub" role="group" aria-label="অ্যাডমিন বিভাগ">' +
+      [['dep', 'ডিপোজিট'], ['wd', 'উইথড্র'], ['set', 'সেটিং']].map(function (t) { return '<button type="button" data-atab="' + t[0] + '" aria-pressed="' + (S.adminTab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    if (S.adminTab === 'dep') {
+      h += '<div class="list">';
+      var list = S.deposits.slice().sort(function (a, b) { return (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1); });
+      list.forEach(function (d) {
+        var act;
+        if (d.status !== 'pending') act = statusPill(d.status);
+        else if (S.confirm === 'dep' + d.id) act = '<div class="msg ok" style="margin:0;flex-basis:100%">bKash/Nagad অ্যাপে TrxID <b>' + esc(d.trx) + '</b> ও ' + tk(d.amount) + ' মিলিয়ে দেখেছেন?</div><div class="inline-actions"><button class="btn green sm" data-act="dep-ok" data-id="' + d.id + '">হ্যাঁ, অ্যাপ্রুভ</button><button class="btn ghost sm" data-act="cancel">ফিরে যান</button></div>';
+        else act = '<div class="inline-actions"><button class="btn green sm" data-act="dep-ask" data-id="' + d.id + '">অ্যাপ্রুভ</button><button class="btn red sm" data-act="dep-no" data-id="' + d.id + '">বাতিল</button></div>';
+        h += '<div class="item"><div class="l"><b>' + esc(d.user) + '</b> · <span class="num">' + tk(d.amount) + '</span> · ' + MN[d.method] + '<small>প্রেরক ' + bn(d.sender) + ' · TrxID <span class="num">' + esc(d.trx) + '</span></small></div>' + act + '</div>';
+      });
+      h += '</div>';
+    } else if (S.adminTab === 'wd') {
+      h += '<div class="list">';
+      S.withdrawals.slice().sort(function (a, b) { return (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1); }).forEach(function (w) {
+        var act = w.status !== 'pending' ? statusPill(w.status) : '<div class="inline-actions"><button class="btn green sm" data-act="wd-ok" data-id="' + w.id + '">টাকা পাঠিয়েছি</button><button class="btn red sm" data-act="wd-no" data-id="' + w.id + '">বাতিল ও ফেরত</button></div>';
+        h += '<div class="item"><div class="l"><b>' + esc(w.user) + '</b> · <span class="num">' + tk(w.amount) + '</span> · ' + MN[w.method] + '<small>প্রাপক <span class="num">' + bn(w.receiver) + '</span> <button class="btn ghost sm" data-copy="' + w.receiver + '" style="padding:2px 8px;margin-left:6px">কপি</button></small></div>' + act + '</div>';
+      });
+      h += '</div>';
+    } else {
+      h += '<div class="list"><div class="item"><div class="l"><b>পেমেন্ট নম্বর</b><small>ইউজাররা এই নম্বরে টাকা পাঠায়</small></div><span class="num">' + bn(PAY_NUMBER) + '</span></div>' +
+        '<div class="item"><div class="l"><b>হোয়াটসঅ্যাপ নম্বর</b><small>৮৮ কোডসহ রাখা হয়</small></div><span class="num">' + bn('8801346022330') + '</span></div>' +
+        '<div class="item"><div class="l"><b>সর্বনিম্ন ডিপোজিট</b></div><span class="num">' + tk(MIN_DEP) + '</span></div>' +
+        '<div class="item"><div class="l"><b>সর্বনিম্ন উইথড্র</b></div><span class="num">' + tk(MIN_WD) + '</span></div></div>' +
+        '<p class="muted" style="margin:12px 0 0">আসল সাইটে এই চারটি মান অ্যাডমিন পেজ থেকেই বদলানো যায়, কোড ছুঁতে হয় না।</p>';
+    }
+    return h + '</div>';
+  }
+
+  function supportScreen() {
+    return '<div><span class="eyebrow">কাস্টমার সার্ভিস</span><h2>সমস্যা হলে সরাসরি জানান</h2></div>' +
+      '<div class="card"><div class="row"><div><div class="muted">হোয়াটসঅ্যাপ নম্বর</div><div class="num" style="font-size:1.6rem;font-weight:700">' + bn(WA_DISPLAY) + '</div><div class="muted">সেবার সময়: সকাল ১০টা – রাত ১০টা</div></div>' +
+      '<div class="inline-actions"><a class="btn wa" href="https://wa.me/8801346022330" target="_blank" rel="noopener noreferrer">হোয়াটসঅ্যাপে মেসেজ করুন</a><button class="btn ghost" data-copy="' + WA_DISPLAY + '">নম্বর কপি</button></div></div></div>' +
+      '<div class="card"><h3 style="margin-bottom:8px">সাধারণ প্রশ্ন</h3>' +
+      '<details><summary>ডিপোজিট কতক্ষণে যোগ হয়?</summary><p>অ্যাডমিন TrxID ও টাকা মিলিয়ে অ্যাপ্রুভ করলে ওয়ালেটে টাকা যোগ হয়। সাধারণত অল্প সময়ের মধ্যে।</p></details>' +
+      '<details><summary>উইথড্র কবে পাব?</summary><p>অনুরোধ করার সময় টাকা ওয়ালেট থেকে আটকে যায়। যাচাইয়ের পর আপনার নম্বরে পাঠানো হয়।</p></details>' +
+      '<details><summary>ভুল TrxID দিলে কী হবে?</summary><p>অনুরোধ বাতিল হবে। সঠিক তথ্য দিয়ে আবার অনুরোধ করুন।</p></details>' +
+      '<details><summary>রুম আইডি কখন দেখা যাবে?</summary><p>ম্যাচ শুরুর ১০ মিনিট আগে থেকে, শুধু কনফার্ম প্লেয়ারদের জন্য।</p></details>' +
+      '<details><summary>টুর্নামেন্ট বাতিল হলে ফি?</summary><p>এন্ট্রি ফি আপনার ওয়ালেটে ফেরত আসে।</p></details></div>';
+  }
+
+  function render() {
+    if (S.tab === 'admin' && S.role !== 'admin') S.tab = 'home';
+    renderTabs();
+    var el = document.getElementById('screen');
+    el.innerHTML = S.tab === 'home' ? homeScreen() : S.tab === 'wallet' ? walletScreen() : S.tab === 'admin' ? adminScreen() : supportScreen();
+  }
+
+  /* ---------- actions ---------- */
+  function msg(id, kind, text) { var e = document.getElementById(id); if (e) e.innerHTML = '<div class="msg ' + kind + '" role="alert">' + esc(text) + '</div>'; }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button, a'); if (!t) return;
+    if (t.id === 'roleUser') { S.role = 'user'; S.confirm = null; return render(); }
+    if (t.id === 'roleAdmin') { S.role = 'admin'; S.tab = 'admin'; S.confirm = null; return render(); }
+    if (t.dataset.tab) { S.tab = t.dataset.tab; S.confirm = null; return render(); }
+    if (t.dataset.atab) { S.adminTab = t.dataset.atab; return render(); }
+    if (t.dataset.sheet) { S.sheet = S.sheet === t.dataset.sheet ? null : t.dataset.sheet; return render(); }
+    if (t.dataset.method) { S.form.method = t.dataset.method; var keep = {}; ['dAmt', 'dSender', 'dTrx', 'wAmt', 'wRecv'].forEach(function (i) { var x = document.getElementById(i); if (x) keep[i] = x.value; }); render(); Object.keys(keep).forEach(function (i) { var x = document.getElementById(i); if (x) x.value = keep[i]; }); return; }
+    if (t.dataset.quick) { var a = document.getElementById('dAmt'); if (a) a.value = t.dataset.quick; return; }
+    if (t.dataset.copy) return copy(t.dataset.copy);
+    var act = t.dataset.act; if (!act) return;
+    var id = Number(t.dataset.id);
+    if (act === 'cancel') { S.confirm = null; return render(); }
+    if (act === 'goadd') { S.tab = 'wallet'; S.sheet = 'add'; return render(); }
+    if (act === 'copynum') return copy(PAY_NUMBER);
+    if (act === 'join') { S.confirm = 'join' + id; return render(); }
+    if (act === 'join-yes') {
+      var T = S.tournaments.filter(function (x) { return x.id === id; })[0];
+      if (!T || S.balance < T.fee) { toast('ব্যালেন্স কম। আগে টাকা অ্যাড করুন।'); S.confirm = null; return render(); }
+      ledger('entry_fee', -T.fee, T.title); T.joined = true; T.filled += 1; S.confirm = null; toast('জয়েন সফল, স্লট কনফার্ম'); return render();
+    }
+    if (act === 'dep-ask') { S.confirm = 'dep' + id; return render(); }
+    if (act === 'dep-ok') {
+      var D = S.deposits.filter(function (x) { return x.id === id; })[0];
+      if (D && D.status === 'pending') { D.status = 'approved'; if (D.user === 'আপনি') ledger('deposit', D.amount, 'ডিপোজিট ' + D.trx); }
+      S.confirm = null; toast('অ্যাপ্রুভ হয়েছে'); return render();
+    }
+    if (act === 'dep-no') { var D2 = S.deposits.filter(function (x) { return x.id === id; })[0]; if (D2) D2.status = 'rejected'; toast('বাতিল করা হয়েছে'); return render(); }
+    if (act === 'wd-ok') { var W = S.withdrawals.filter(function (x) { return x.id === id; })[0]; if (W) W.status = 'approved'; toast('পাঠানো হয়েছে বলে চিহ্নিত'); return render(); }
+    if (act === 'wd-no') {
+      var W2 = S.withdrawals.filter(function (x) { return x.id === id; })[0];
+      if (W2 && W2.status === 'pending') { W2.status = 'rejected'; if (W2.user === 'আপনি') ledger('withdraw_refund', W2.amount, 'উইথড্র বাতিল'); }
+      toast('বাতিল, টাকা ফেরত'); return render();
+    }
+  });
+
+  document.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = e.target.id;
+    if (f === 'addForm') {
+      var amt = parseInt(document.getElementById('dAmt').value, 10), snd = document.getElementById('dSender').value.trim(), trx = document.getElementById('dTrx').value.trim().toUpperCase();
+      if (!(amt >= MIN_DEP && amt <= 50000)) return msg('addMsg', 'err', 'টাকার পরিমাণ ' + tk(MIN_DEP) + ' থেকে ' + tk(50000) + ' এর মধ্যে হতে হবে।');
+      if (!/^01[0-9]{9}$/.test(snd)) return msg('addMsg', 'err', 'প্রেরকের নম্বর সঠিক নয়। ০১ দিয়ে শুরু করে ১১ সংখ্যা দিন।');
+      if (!/^[A-Z0-9]{6,20}$/.test(trx)) return msg('addMsg', 'err', 'সঠিক TrxID দিন (৬ থেকে ২০টি ইংরেজি অক্ষর বা সংখ্যা)।');
+      if (S.deposits.some(function (d) { return d.trx === trx; })) return msg('addMsg', 'err', 'এই TrxID আগেই ব্যবহার করা হয়েছে।');
+      S.deposits.unshift({ id: S.nextId++, user: 'আপনি', method: S.form.method, amount: amt, sender: snd, trx: trx, status: 'pending' });
+      S.sheet = null; toast('আপনার অনুরোধ জমা হয়েছে। অ্যাডমিন যাচাই করলে ব্যালেন্সে টাকা যোগ হবে।'); return render();
+    }
+    if (f === 'wdForm') {
+      var wa = parseInt(document.getElementById('wAmt').value, 10), rc = document.getElementById('wRecv').value.trim();
+      if (!(wa >= MIN_WD)) return msg('wdMsg', 'err', 'সর্বনিম্ন উইথড্র ' + tk(MIN_WD) + '।');
+      if (wa > S.balance) return msg('wdMsg', 'err', 'ব্যালেন্স কম। আপনার ব্যালেন্স ' + tk(S.balance) + '।');
+      if (!/^01[0-9]{9}$/.test(rc)) return msg('wdMsg', 'err', 'প্রাপকের নম্বর সঠিক নয়।');
+      ledger('withdraw', -wa, 'উইথড্র অনুরোধ');
+      S.withdrawals.unshift({ id: S.nextId++, user: 'আপনি', method: S.form.method, amount: wa, receiver: rc, status: 'pending' });
+      S.sheet = null; toast('অনুরোধ জমা হয়েছে, টাকা ওয়ালেটে আটকে রাখা হয়েছে।'); return render();
+    }
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
