@@ -1,5 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDDweLEqB6C12QS67Ug5U2_s_HHgnreB5s",
   authDomain: "palyx-ff-tournament.firebaseapp.com",
@@ -12,5 +14,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export { app, firebaseConfig };
+const auth = getAuth(app);
+
+export { app, auth, firebaseConfig };
+
 export default app;
