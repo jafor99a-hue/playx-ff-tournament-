@@ -1,7 +1,6 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDDweLEqB6C12QS67Ug5U2_s_HHgnreB5s",
   authDomain: "palyx-ff-tournament.firebaseapp.com",
   databaseURL: "https://palyx-ff-tournament-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -14,4 +13,5 @@ export const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+export { app, firebaseConfig };
 export default app;
