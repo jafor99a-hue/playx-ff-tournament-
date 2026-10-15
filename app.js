@@ -899,4 +899,165 @@ $("room-form").addEventListener(
       if (t) t.roomSet = true;
 
       $("room-id").value = "";
-      $("room-password").va
+      $("room-password").value = "";
+
+      await renderAdmin();
+      toast("রুম আইডি ও পাসওয়ার্ড সেভ হয়েছে।");
+    } catch (error) {
+      console.error(error);
+      toast(authError(error));
+    }
+  }
+);
+
+$("clear-room-btn").addEventListener(
+  "click",
+  async () => {
+    if (!isAdmin()) {
+      toast("Admin অনুমতি নেই।");
+      return;
+    }
+
+    const id = $("room-tournament").value;
+
+    if (!id) {
+      toast("একটি টুর্নামেন্ট নির্বাচন করুন।");
+      return;
+    }
+
+    try {
+      await deleteDoc(
+        doc(db, "tournamentRooms", id)
+      );
+
+      const t = tournaments.find(x => x.id === id);
+      if (t) t.roomSet = false;
+
+      await renderAdmin();
+      toast("রুমের তথ্য মুছে ফেলা হয়েছে।");
+    } catch (error) {
+      console.error(error);
+      toast(authError(error));
+    }
+  }
+);
+
+$("refresh-admin").addEventListener(
+  "click",
+  async () => {
+    try {
+      await loadTournaments();
+      await renderAdmin();
+      toast("তথ্য রিফ্রেশ হয়েছে।");
+    } catch (error) {
+      toast(authError(error));
+    }
+  }
+);
+
+async function renderAdmin() {
+  if (!isAdmin()) return;
+
+  fillRoomTournamentSelect();
+
+  for (const t of tournaments) {
+    try {
+      t.roomSet = (
+        await getDoc(
+          doc(db, "tournamentRooms", t.id)
+        )
+      ).exists();
+    } catch (_) {
+      t.roomSet = false;
+    }
+  }
+
+  $("admin-tournaments").innerHTML =
+    tournaments.map(t => `
+      <div class="list-card">
+        <div class="grow">
+          <h3>${safe(t.name)}</h3>
+
+          <div class="muted">
+            ${safe(t.mode)} · ${safe(t.map)} ·
+            ${Number(t.joinedCount || 0)}/
+            ${Number(t.slots || 48)} joined
+          </div>
+
+          <div class="muted">
+            ${t.roomSet
+              ? "🔑 Room set"
+              : "⏳ Room not set"}
+          </div>
+        </div>
+
+        <button class="btn outline"
+          data-edit-room="${safe(t.id)}">
+          রুম সেট করুন
+        </button>
+
+        <button class="btn outline"
+          data-finish="${safe(t.id)}">
+          রেজাল্ট/শেষ
+        </button>
+      </div>
+    `).join("") ||
+    `<div class="muted">কোনো টুর্নামেন্ট নেই।</div>`;
+
+  $("admin-tournaments")
+    .querySelectorAll("[data-edit-room]")
+    .forEach(btn => {
+      btn.addEventListener("click", () => {
+        $("room-tournament").value =
+          btn.dataset.editRoom;
+
+        $("room-id").focus();
+
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      });
+    });
+
+  $("admin-tournaments")
+    .querySelectorAll("[data-finish]")
+    .forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const result = prompt(
+          "রেজাল্ট/বিজয়ীর তথ্য লিখুন (Cancel করলে কিছু হবে না):"
+        );
+
+        if (result === null) return;
+
+        try {
+          await updateDoc(
+            doc(db, "tournaments", btn.dataset.finish),
+            {
+              status: "finished",
+              result
+            }
+          );
+
+          await loadTournaments();
+          renderResults();
+          await renderAdmin();
+
+          toast("রেজাল্ট সেভ হয়েছে।");
+        } catch (error) {
+          toast(authError(error));
+        }
+      });
+    });
+}
+
+try {
+  showAuthMode("login");
+  console.log("PlayX FF: app.js চালু হয়েছে");
+} catch (error) {
+  console.error("PlayX FF startup error:", error);
+  alert(
+    "ওয়েবসাইট চালু করতে সমস্যা হয়েছে: " +
+    error.message
+  );
+}
