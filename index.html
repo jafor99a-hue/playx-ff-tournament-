@@ -1,428 +1,261 @@
-
 <!doctype html>
 <html lang="bn">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#06132f">
-  <meta name="description" content="PlayX FF Tournament - Free Fire Community Tournament">
+  <meta name="theme-color" content="#07152e">
   <title>PlayX FF Tournament</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+  <header class="topbar">
+    <a class="brand" href="#" id="brand-home">PLAYX <span>FF</span></a>
+    <div class="user-tools">
+      <span id="user-label">Guest</span>
+      <button id="logout-btn" class="btn secondary" hidden>Logout</button>
+    </div>
+  </header>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <!-- LOGIN / REGISTER -->
-  <section id="auth-screen" class="auth-wrap">
-    <div class="auth-card">
-      <div class="brand-mark">
-        Play<span>X</span>
-        <small>FF TOURNAMENT</small>
-      </div>
-
+  <main class="container">
+    <!-- LOGIN / REGISTER -->
+    <section id="auth-view" class="auth-card">
+      <div class="logo-mark">PX</div>
+      <p class="eyebrow">FREE FIRE COMMUNITY</p>
       <h1>PlayX FF Tournament</h1>
-      <p class="muted">খেলুন • প্রতিযোগিতা করুন • জিতুন</p>
-
-      <div class="auth-tabs">
-        <button id="show-login" class="active" type="button">লগইন</button>
-        <button id="show-register" type="button">রেজিস্ট্রেশন</button>
-      </div>
+      <p class="muted">লগইন করো অথবা নতুন অ্যাকাউন্ট তৈরি করো</p>
 
       <form id="auth-form">
+        <label for="auth-name">তোমার নাম (Register-এর জন্য)</label>
+        <input id="auth-name" type="text" maxlength="40"
+               autocomplete="name" placeholder="Player Name">
+
         <label for="auth-email">ইমেইল</label>
-        <input id="auth-email" type="email"
-               autocomplete="email" required
-               placeholder="আপনার ইমেইল">
+        <input id="auth-email" type="email" required
+               autocomplete="email" placeholder="name@example.com">
 
         <label for="auth-password">পাসওয়ার্ড</label>
-        <input id="auth-password" type="password"
-               autocomplete="current-password"
-               minlength="6" required
+        <input id="auth-password" type="password" required
+               minlength="6" autocomplete="current-password"
                placeholder="কমপক্ষে ৬ অক্ষর">
 
-        <label id="name-label" for="display-name" hidden>
-          গেমের নাম / Player Name
-        </label>
-        <input id="display-name" hidden
-               maxlength="24"
-               placeholder="আপনার গেমের নাম">
-
-        <button id="auth-submit" class="btn primary full" type="submit">
-          লগইন করুন
+        <button id="login-btn" class="btn primary full" type="submit">
+          Login
         </button>
-
-        <p id="auth-message" class="form-message" aria-live="polite"></p>
+        <button id="register-btn" class="btn secondary full" type="button">
+          নতুন অ্যাকাউন্ট তৈরি
+        </button>
+        <p id="auth-message" class="message" role="status"></p>
       </form>
+    </section>
 
-      <p class="tiny muted">
-        আপনার অ্যাকাউন্ট Firebase Authentication দিয়ে পরিচালিত হয়।
-      </p>
-    </div>
-  </section>
+    <!-- MAIN APP -->
+    <section id="app-view" hidden>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">WELCOME TO THE BATTLE</p>
+          <h1>খেলো, জিতো, এগিয়ে যাও!</h1>
+          <p class="muted">টুর্নামেন্টের তথ্য ও ফলাফল এক জায়গায়।</p>
+        </div>
+        <div class="hero-badge">FREE<br>TO PLAY</div>
+      </section>
 
-  <!-- MAIN APPLICATION -->
-  <div id="app-shell" class="shell" hidden>
-
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="sidebar">
-      <div class="brand-mark">
-        Play<span>X</span>
-        <small>FF TOURNAMENT</small>
-      </div>
-
-      <nav aria-label="প্রধান মেনু">
-        <button class="nav-link active" data-view="dashboard" type="button">
-          ⌂ <span>ড্যাশবোর্ড</span>
-        </button>
-        <button class="nav-link" data-view="tournaments" type="button">
-          ▣ <span>টুর্নামেন্ট</span>
-        </button>
-        <button class="nav-link" data-view="joined" type="button">
-          ♟ <span>আমার ম্যাচ</span>
-        </button>
-        <button class="nav-link" data-view="wallet" type="button">
-          ◈ <span>ডেমো ওয়ালেট</span>
-        </button>
-        <button class="nav-link" data-view="results" type="button">
-          🏆 <span>রেজাল্ট</span>
-        </button>
-        <button id="admin-nav" class="nav-link"
-                data-view="admin" type="button" hidden>
-          ⚙ <span>অ্যাডমিন প্যানেল</span>
-        </button>
+      <nav class="nav-grid">
+        <button class="nav-btn active" data-view="dashboard">Home</button>
+        <button class="nav-btn" data-view="tournaments">Tournaments</button>
+        <button class="nav-btn" data-view="joined">My Matches</button>
+        <button class="nav-btn" data-view="wallet">Demo Wallet</button>
+        <button class="nav-btn" data-view="results">Results</button>
+        <button class="nav-btn admin-nav" data-view="admin" hidden>Admin</button>
       </nav>
 
-      <div class="sidebar-promo">
-        <b>PLAY • COMPETE • WIN</b>
-        <p>আপনার পরের ম্যাচের জন্য প্রস্তুত?</p>
-      </div>
-
-      <button id="logout-btn" class="nav-link logout" type="button">
-        ↪ <span>লগআউট</span>
-      </button>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main">
-
-      <header class="topbar">
-        <button id="menu-btn" class="menu-btn"
-                type="button" aria-label="মেনু">☰</button>
-
-        <div>
-          <span class="eyebrow">WELCOME BACK</span>
-          <h2 id="welcome-title">PlayX Arena</h2>
-        </div>
-
-        <div class="user-chip">
-          <div class="avatar">PX</div>
-          <div>
-            <b id="user-name">Player</b>
-            <small id="user-role">Player</small>
-          </div>
-        </div>
-      </header>
-
-      <!-- DASHBOARD -->
       <section id="view-dashboard" class="view">
-        <div class="hero">
-          <div class="hero-copy">
-            <span class="pill">FREE TO PLAY</span>
-            <h1>PLAY. COMPETE.<br><span>WIN.</span></h1>
-            <p>আপনার স্কোয়াড তৈরি করুন এবং পরবর্তী ম্যাচে যোগ দিন।</p>
-            <button class="btn gold" data-goto="tournaments" type="button">
-              টুর্নামেন্ট দেখুন ↗
-            </button>
-          </div>
-
-          <div class="hero-art" aria-hidden="true">
-            ⚡<strong>PlayX</strong><small>FF ARENA</small>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR DASHBOARD</p>
+            <h2>Dashboard</h2>
           </div>
         </div>
 
         <div class="stats-grid">
-          <article class="stat-card">
-            <span>চলমান টুর্নামেন্ট</span>
-            <strong id="stat-tournaments">0</strong>
+          <article class="panel">
+            <span class="muted">ডেমো ব্যালেন্স</span>
+            <h2>৳<span id="dashboard-balance">0</span></h2>
           </article>
-
-          <article class="stat-card">
-            <span>আমার ম্যাচ</span>
-            <strong id="stat-joined">0</strong>
-          </article>
-
-          <article class="stat-card">
-            <span>ডেমো ব্যালেন্স</span>
-            <strong>৳<span id="demo-balance">0</span></strong>
+          <article class="panel">
+            <span class="muted">Joined Matches</span>
+            <h2 id="dashboard-joined">0</h2>
           </article>
         </div>
 
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">JOIN THE BATTLE</span>
-            <h2>জনপ্রিয় টুর্নামেন্ট</h2>
-          </div>
-          <button class="text-btn" data-goto="tournaments" type="button">
-            সব দেখুন →
+        <div class="panel">
+          <h3>শুরু করো</h3>
+          <p class="muted">
+            Tournament দেখো, বিনামূল্যের ম্যাচে Join করো,
+            আর প্রকাশিত Results দেখো।
+          </p>
+          <button class="btn primary" data-go="tournaments">
+            টুর্নামেন্ট দেখো
           </button>
         </div>
-
-        <div id="featured-tournaments" class="tournament-grid"></div>
       </section>
 
-      <!-- TOURNAMENTS -->
       <section id="view-tournaments" class="view" hidden>
         <div class="section-heading">
           <div>
-            <span class="eyebrow">FIND YOUR MATCH</span>
-            <h1>টুর্নামেন্ট</h1>
+            <p class="eyebrow">COMPETE FAIRLY</p>
+            <h2>Available Tournaments</h2>
           </div>
+          <button id="refresh-tournaments" class="btn secondary">Refresh</button>
         </div>
-        <div id="all-tournaments" class="tournament-grid"></div>
+        <div id="tournament-list" class="card-list">
+          <p class="muted">টুর্নামেন্ট লোড হচ্ছে...</p>
+        </div>
       </section>
 
-      <!-- JOINED MATCHES -->
       <section id="view-joined" class="view" hidden>
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">YOUR MATCHES</span>
-            <h1>আমার ম্যাচ</h1>
-          </div>
-        </div>
-        <div id="joined-list" class="stack-list"></div>
+        <h2>My Matches</h2>
+        <div id="joined-list" class="card-list"></div>
       </section>
 
-      <!-- DEMO WALLET -->
+      <!-- DEMO WALLET ONLY -->
       <section id="view-wallet" class="view" hidden>
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">DEMO ONLY</span>
-            <h1>ডেমো ওয়ালেট</h1>
-          </div>
-        </div>
+        <p class="eyebrow">TEST BALANCE ONLY</p>
+        <h2>Demo Wallet</h2>
 
         <div class="wallet-card">
           <span>ডেমো ব্যালেন্স</span>
           <h2>৳<span id="wallet-balance">0</span></h2>
-          <p>এটি শুধু পরীক্ষার ব্যালেন্স। বাস্তব টাকা জমা বা উত্তোলন হয় না।</p>
+          <p>এটি শুধু পরীক্ষার সংখ্যা। বাস্তব টাকা জমা বা উত্তোলন হয় না।</p>
         </div>
 
-        <!-- Admin ছাড়া এই ফর্ম ব্যবহার করা যাবে না।
-             app.js-এ অনুমতি যাচাই এবং ফর্ম লুকানোর ব্যবস্থা করতে হবে। -->
-        <form id="demo-credit-form" class="panel narrow">
-          <h3>ডেমো ব্যালেন্স যোগ করুন</h3>
-          <p class="muted">শুধু অনুমোদিত Admin-এর জন্য।</p>
-
-          <label for="demo-amount">পরিমাণ (৳)</label>
-          <input id="demo-amount" type="number"
-                 min="1" max="1000" step="1" required>
-
-          <button class="btn primary" type="submit">
-            ডেমো ব্যালেন্স যোগ করুন
-          </button>
-        </form>
-      </section>
-
-      <!-- RESULTS -->
-      <section id="view-results" class="view" hidden>
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">MATCH RESULTS</span>
-            <h1>রেজাল্ট</h1>
-          </div>
-        </div>
-        <div id="results-list" class="stack-list"></div>
-      </section>
-
-      <!-- ADMIN PANEL -->
-      <section id="view-admin" class="view" hidden>
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">ADMIN CONTROL CENTER</span>
-            <h1>অ্যাডমিন প্যানেল</h1>
-          </div>
-          <span class="pill">ADMIN</span>
-        </div>
-
-        <!-- PLAYER BALANCE MANAGEMENT -->
         <div class="panel">
-          <h2>👤 Player Balance Management</h2>
+          <h3>ডেমো ব্যালেন্স অনুরোধ</h3>
           <p class="muted">
-            Player-এর Firebase UID ব্যবহার করে ডেমো ব্যালেন্স বাড়ান বা কমান।
+            বাস্তব পেমেন্টের তথ্য লিখবে না। Admin-এর অনুমোদন না হওয়া
+            পর্যন্ত ব্যালেন্স পরিবর্তন হবে না।
           </p>
-
-          <form id="admin-balance-form">
-            <label for="balance-player-uid">Player Firebase UID</label>
-            <input id="balance-player-uid"
-                   type="text" required
-                   autocomplete="off"
-                   placeholder="Player-এর সম্পূর্ণ Firebase UID">
-
-            <label for="balance-action">কাজ নির্বাচন করুন</label>
-            <select id="balance-action" required>
-              <option value="add">ব্যালেন্স বাড়ান (+)</option>
-              <option value="subtract">ব্যালেন্স কমান (−)</option>
-            </select>
-
-            <label for="balance-amount">পরিমাণ (৳)</label>
-            <input id="balance-amount"
-                   type="number" min="1"
-                   max="100000" step="1"
-                   required placeholder="যেমন 100">
-
+          <form id="demo-request-form">
+            <label for="demo-request-amount">ডেমো পরিমাণ</label>
+            <input id="demo-request-amount" type="number"
+                   min="1" max="1000" step="1" required>
             <button class="btn primary full" type="submit">
-              ব্যালেন্স পরিবর্তন করুন
+              Demo Request জমা দিন
             </button>
-
-            <p id="balance-admin-message"
-               class="form-message" aria-live="polite"></p>
+            <p id="demo-request-message" class="message"></p>
           </form>
-
-          <p class="notice">
-            🔒 ব্যালেন্স পরিবর্তনের আগে Player UID যাচাই করুন।
-            এই অপশনটি শুধু অনুমোদিত Admin ব্যবহার করতে পারবেন।
-          </p>
         </div>
 
-        <div class="admin-grid">
+        <div class="panel">
+          <h3>আমার ডেমো অনুরোধ</h3>
+          <div id="my-demo-requests"></div>
+        </div>
+      </section>
 
-          <!-- CREATE TOURNAMENT -->
-          <form id="tournament-form" class="panel">
-            <h2>＋ নতুন টুর্নামেন্ট তৈরি</h2>
+      <section id="view-results" class="view" hidden>
+        <h2>Results</h2>
+        <div id="results-list" class="card-list"></div>
+      </section>
 
-            <label for="t-name">টুর্নামেন্টের নাম</label>
-            <input id="t-name" required maxlength="60"
-                   placeholder="যেমন: PlayX Squad War">
+      <!-- ADMIN -->
+      <section id="view-admin" class="view" hidden>
+        <p class="eyebrow">ADMIN AREA</p>
+        <h2>Admin Panel</h2>
+        <p class="muted">
+          Admin ইমেইল দিয়ে লগইন করলে এই অংশ ব্যবহার করা যাবে।
+        </p>
 
-            <div class="two-col">
-              <div>
-                <label for="t-mode">মোড</label>
-                <select id="t-mode">
-                  <option>Solo</option>
-                  <option>Duo</option>
-                  <option selected>Squad</option>
-                </select>
-              </div>
+        <div class="panel">
+          <h3>নতুন Free Tournament তৈরি</h3>
+          <form id="create-tournament-form">
+            <label for="t-title">Tournament Name</label>
+            <input id="t-title" maxlength="80" required>
 
-              <div>
-                <label for="t-map">ম্যাপ</label>
-                <select id="t-map">
-                  <option>Bermuda</option>
-                  <option>Kalahari</option>
-                  <option>Purgatory</option>
-                  <option>Alpine</option>
-                </select>
-              </div>
-            </div>
+            <label for="t-game">Game / Mode</label>
+            <input id="t-game" maxlength="50" value="Free Fire" required>
 
-            <div class="two-col">
-  <div>
-    <label for="t-prize">প্রাইজ পুল (৳)</label>
-    <input
-      id="t-prize"
-      type="number"
-      min="0"
-      max="1000000"
-      step="1"
-      value="0"
-      required
-    >
-  </div>
+            <label for="t-prize">Prize (শুধু তথ্য হিসেবে)</label>
+            <input id="t-prize" maxlength="80" placeholder="যেমন: Demo Prize">
 
-  <div>
-    <label for="t-entry-fee">Entry Fee (Demo Balance)</label>
-    <input
-      id="t-entry-fee"
-      type="number"
-      min="0"
-      max="100000"
-      step="1"
-      value="0"
-      required
-    >
-  </div>
-</div>
-
-<label for="t-slots">স্লট</label>
-<input
-  id="t-slots"
-  type="number"
-  min="1"
-  max="100"
-  value="48"
-  required
->
+            <label for="t-slots">স্লট</label>
+            <input id="t-slots" type="number" min="2" max="100"
+                   value="48" required>
 
             <label for="t-time">ম্যাচের সময়</label>
-            <input id="t-time" type="datetime-local">
+            <input id="t-time" type="datetime-local" required>
 
             <button class="btn primary full" type="submit">
-              টুর্নামেন্ট প্রকাশ করুন
+              Tournament তৈরি করো
             </button>
-          </form>
-
-          <!-- ROOM MANAGEMENT -->
-          <form id="room-form" class="panel">
-            <h2>🔑 রুম আইডি ও পাসওয়ার্ড সেট করুন</h2>
-
-            <p class="muted">
-              নির্বাচিত টুর্নামেন্টের ম্যাচের তথ্য সেট করুন।
-            </p>
-
-            <label for="room-tournament">টুর্নামেন্ট নির্বাচন</label>
-            <select id="room-tournament" required>
-              <option value="">টুর্নামেন্ট বেছে নিন</option>
-            </select>
-
-            <div class="two-col">
-              <div>
-                <label for="room-id">রুম আইডি</label>
-                <input id="room-id" inputmode="numeric"
-                       maxlength="30" required placeholder="123456">
-              </div>
-
-              <div>
-                <label for="room-password">রুম পাসওয়ার্ড</label>
-                <input id="room-password" maxlength="40"
-                       required placeholder="PLAYX123">
-              </div>
-            </div>
-
-            <p class="notice">
-              🔒 শুধু যোগ দেওয়া খেলোয়াড়দের রুমের তথ্য দেখানোর জন্য
-              Firestore Rules সঠিকভাবে সেট করতে হবে।
-            </p>
-
-            <button class="btn primary full" type="submit">
-              রুম আইডি ও পাসওয়ার্ড সেভ করুন
-            </button>
-
-            <button id="clear-room-btn" class="btn outline full" type="button">
-              রুমের তথ্য মুছুন
-            </button>
+            <p id="create-message" class="message"></p>
           </form>
         </div>
 
-        <!-- TOURNAMENT MANAGEMENT -->
         <div class="panel">
-          <div class="section-heading">
-            <h2>টুর্নামেন্ট ম্যানেজমেন্ট</h2>
-            <button id="refresh-admin" class="btn outline" type="button">
-              রিফ্রেশ
+          <h3>Room ID / Password সেট করো</h3>
+          <form id="room-form">
+            <label for="room-tournament">Tournament ID</label>
+            <input id="room-tournament" required>
+            <label for="room-id">Room ID</label>
+            <input id="room-id" maxlength="100" required>
+            <label for="room-password">Room Password</label>
+            <input id="room-password" maxlength="100" required>
+            <button class="btn primary full" type="submit">
+              Room Details Save
             </button>
-          </div>
-          <div id="admin-tournaments" class="stack-list"></div>
+            <p id="room-message" class="message"></p>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3>Demo Balance নিয়ন্ত্রণ</h3>
+          <p class="muted">
+            শুধু ডেমো পরীক্ষা। সঠিক User UID দিতে হবে।
+          </p>
+          <form id="admin-balance-form">
+            <label for="balance-user-uid">User UID</label>
+            <input id="balance-user-uid" required>
+            <label for="balance-action">Action</label>
+            <select id="balance-action">
+              <option value="add">Demo Balance যোগ</option>
+              <option value="subtract">Demo Balance কমাও</option>
+            </select>
+            <label for="balance-amount">পরিমাণ</label>
+            <input id="balance-amount" type="number"
+                   min="1" max="1000" step="1" required>
+            <button class="btn primary full" type="submit">
+              Update Demo Balance
+            </button>
+            <p id="balance-message" class="message"></p>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3>Pending Demo Requests</h3>
+          <div id="admin-demo-requests"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Result প্রকাশ</h3>
+          <form id="result-form">
+            <label for="result-tournament">Tournament ID</label>
+            <input id="result-tournament" required>
+            <label for="result-text">Result Details</label>
+            <textarea id="result-text" maxlength="1000" required></textarea>
+            <button class="btn primary full" type="submit">Publish Result</button>
+            <p id="result-message" class="message"></p>
+          </form>
         </div>
       </section>
+    </section>
 
-      <footer>
-        © 2026 PlayX FF Tournament · Community tournament platform
-      </footer>
-    </main>
-  </div>
+    <p id="global-message" class="global-message" role="status"></p>
+  </main>
+
+  <footer>
+    <p>PlayX FF Tournament · Demo version</p>
+    <p>কোনো বাস্তব পেমেন্ট বা বাস্তব অর্থের ব্যালেন্স নেই।</p>
+  </footer>
 
   <script type="module" src="./app.js"></script>
 </body>
-  </html>
-                                          
+          </html>
