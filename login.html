@@ -36,27 +36,103 @@
     </form>
   </main>
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  <script type="module">
+    const form = document.getElementById("auth-form");
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const message = document.getElementById("message");
+    const loginBtn = document.getElementById("login-btn");
+    const registerBtn = document.getElementById("register-btn");
 
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    let auth = null;
+    let busy = false;
+    let signIn;
+    let register;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDDweLEqB6C12QS67Ug5U2_s_HHgnreB5s",
-  authDomain: "palyx-ff-tournament.firebaseapp.com",
-  databaseURL: "https://palyx-ff-tournament-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "palyx-ff-tournament",
-  storageBucket: "palyx-ff-tournament.firebasestorage.app",
-  messagingSenderId: "809369357695",
-  appId: "1:809369357695:web:860377cae1659623815e4a",
-  measurementId: "G-E0GMSK7CP9"
-};
+    async function initialize() {
+      try {
+        message.textContent = "Firebase সংযোগ হচ্ছে...";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+        const config = await import("./firebase-config.js");
+        auth = config.auth;
 
-export { app, auth, firebaseConfig };
+        if (!auth) {
+          throw new Error(
+            "firebase-config.js-এ auth export পরীক্ষা করুন।"
+          );
+        }
 
-export default app;
+        const firebaseAuth = await import(
+          "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js"
+        );
+
+        signIn = firebaseAuth.signInWithEmailAndPassword;
+        register = firebaseAuth.createUserWithEmailAndPassword;
+
+        message.textContent = "প্রস্তুত! Login অথবা Register করুন।";
+      } catch (error) {
+        message.textContent =
+          "Firebase Error: " + (error.message || error);
+        loginBtn.disabled = true;
+        registerBtn.disabled = true;
+      }
+    }
+
+    async function authenticate(mode) {
+      if (busy || !form.reportValidity()) return;
+
+      if (!auth || !signIn || !register) {
+        message.textContent = "Firebase প্রস্তুত হয়নি। পেজ Reload করুন।";
+        return;
+      }
+
+      busy = true;
+      loginBtn.disabled = true;
+      registerBtn.disabled = true;
+
+      try {
+        message.textContent =
+          mode === "login" ? "Login হচ্ছে..." : "অ্যাকাউন্ট তৈরি হচ্ছে...";
+
+        if (mode === "login") {
+          await signIn(auth, email.value.trim(), password.value);
+        } else {
+          await register(auth, email.value.trim(), password.value);
+        }
+
+        message.textContent = "সফল! Dashboard খুলছে...";
+        window.location.href = "./index.html";
+      } catch (error) {
+        const errors = {
+          "auth/invalid-email": "সঠিক Email লিখুন।",
+          "auth/invalid-credential": "Email অথবা Password সঠিক নয়।",
+          "auth/email-already-in-use": "এই Email দিয়ে অ্যাকাউন্ট আছে। Login করুন।",
+          "auth/weak-password": "কমপক্ষে ৬ অক্ষরের Password দিন।",
+          "auth/operation-not-allowed": "Firebase Email/Password চালু করুন।",
+          "auth/unauthorized-domain": "Firebase Authorized domains পরীক্ষা করুন।",
+          "auth/network-request-failed": "ইন্টারনেট সংযোগ পরীক্ষা করুন।"
+        };
+
+        message.textContent =
+          errors[error.code] ||
+          "সমস্যা: " + (error.message || error.code || error);
+      } finally {
+        busy = false;
+        loginBtn.disabled = false;
+        registerBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      authenticate("login");
+    });
+
+    registerBtn.addEventListener("click", () => {
+      authenticate("register");
+    });
+
+    initialize();
   </script>
 </body>
 </html>
