@@ -24,8 +24,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-import { firebaseConfig } from "./firebase-config.js";
-
+import app from "./firebase-config.js";
 // ---------- Firebase Setup ----------
 
 const configured =
