@@ -3,317 +3,346 @@
 <html lang="bn">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#071126">
   <title>PlayX FF Tournament</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <header class="topbar">
-    <a class="brand" href="#home">
-      <span class="brand-mark">PX</span>
-      <span>
-        <strong>PlayX <em>FF</em></strong>
-        <small>FREE FIRE TOURNAMENT</small>
-      </span>
-    </a>
-    <button id="logout-btn" class="logout-btn" hidden>Logout ↗</button>
-  </header>
+<header class="topbar">
+  <a class="brand" href="#home">
+    <span class="brand-mark">PX</span>
+    <span>
+      <strong>PlayX <em>FF</em></strong>
+      <small>FREE FIRE TOURNAMENT</small>
+    </span>
+  </a>
+  <button id="logout-btn" class="secondary" hidden>Logout</button>
+</header>
 
-  <main class="container">
-    <p id="notice" class="notice" role="status"></p>
+<main class="container">
+  <p id="notice" class="notice" role="status"></p>
 
-    <!-- LOGIN / REGISTER -->
-    <section id="auth-section" class="auth-wrap">
-      <div class="hero-art">
-        <span class="hero-kicker">WELCOME TO THE BATTLE</span>
-        <h1>PLAY. WIN.<br><span>DOMINATE.</span></h1>
-        <p>Join tournaments and track your Demo Points.</p>
-        <div class="hero-tags">
-          <span>🎮 FREE FIRE</span>
-          <span>🏆 TOURNAMENTS</span>
+  <!-- LOGIN / REGISTER -->
+  <section id="auth-section" class="auth-wrap">
+    <div class="hero-art">
+      <span class="hero-kicker">WELCOME TO THE BATTLE</span>
+      <h1>PLAY. WIN.<br><span>DOMINATE.</span></h1>
+      <p>Free Fire Tournament-এ যোগ দাও এবং খেলো।</p>
+      <div class="hero-tags">
+        <span>🎮 FREE FIRE</span>
+        <span>🏆 TOURNAMENT</span>
+      </div>
+    </div>
+
+    <div class="panel auth-panel">
+      <div class="section-label">YOUR ACCOUNT</div>
+      <h2>Login / Register</h2>
+      <p class="muted">তোমার অ্যাকাউন্টে প্রবেশ করো</p>
+
+      <form id="auth-form">
+        <label for="display-name">তোমার নাম (Register-এর জন্য)</label>
+        <input id="display-name" maxlength="60" placeholder="তোমার নাম">
+
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" minlength="6"
+               autocomplete="current-password" required>
+
+        <div class="actions">
+          <button type="submit" id="login-btn">LOGIN →</button>
+          <button type="button" id="register-btn" class="secondary">
+            REGISTER
+          </button>
         </div>
+      </form>
+      <p class="muted small">এখানে শুধু Demo Balance ব্যবহার হবে।</p>
+    </div>
+  </section>
+
+  <!-- LOGGED-IN APP -->
+  <section id="app-section" hidden>
+
+    <section id="home" class="welcome-row">
+      <div>
+        <div class="section-label">PLAYER DASHBOARD</div>
+        <h1>Ready to <span class="accent">Play?</span></h1>
+        <p>স্বাগতম, <strong id="profile-name">Player</strong></p>
+        <p id="profile-email" class="muted small"></p>
       </div>
-
-      <div class="panel auth-panel">
-        <div class="section-label">YOUR ACCOUNT</div>
-        <h2>Login / Register</h2>
-        <p class="muted">তোমার অ্যাকাউন্টে প্রবেশ করো</p>
-
-        <form id="auth-form">
-          <label for="display-name">Player Name (Register-এর জন্য)</label>
-          <input id="display-name" maxlength="60" placeholder="তোমার নাম">
-
-          <label for="email">Email Address</label>
-          <input id="email" type="email" autocomplete="email" placeholder="name@example.com" required>
-
-          <label for="password">Password</label>
-          <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="কমপক্ষে ৬ অক্ষর" required>
-
-          <div class="actions">
-            <button type="submit" id="login-btn">LOGIN →</button>
-            <button type="button" id="register-btn" class="secondary">REGISTER</button>
-          </div>
-        </form>
-        <p class="muted small">Demo Points বাস্তব টাকা নয়।</p>
-      </div>
+      <span class="online-pill">● PLAYER</span>
     </section>
 
-    <!-- APP -->
-    <section id="app-section" hidden>
+    <!-- DEMO WALLET -->
+    <section class="balance-card">
+      <div class="balance-top">
+        <span class="balance-caption">◈ YOUR DEMO WALLET</span>
+        <span class="demo-pill">DEMO ONLY</span>
+      </div>
+      <p class="balance-label">Available Balance</p>
+      <div class="balance-amount">
+        <strong id="balance">0</strong>
+        <span>PTS</span>
+      </div>
+      <p class="balance-foot">Demo Points বাস্তব টাকা নয়।</p>
+      <div class="balance-bottom">
+        <a href="#wallet" class="wallet-action">＋ Add Points</a>
+        <a href="#wallet" class="wallet-action light">Manage Wallet</a>
+      </div>
+      <div class="balance-decoration">PX</div>
+    </section>
 
-      <!-- HOME / DASHBOARD -->
-      <section id="home" class="welcome-row">
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span class="stat-icon blue-icon">🎮</span>
+        <span class="stat-name">MY MATCHES</span>
+        <strong id="home-joined">0</strong>
+        <small>Joined tournaments</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon gold-icon">🏆</span>
+        <span class="stat-name">BATTLE</span>
+        <strong>FF</strong>
+        <small>Play fair, play smart</small>
+      </article>
+    </section>
+
+    <!-- TOURNAMENT LIST -->
+    <section id="tournaments" class="content-section">
+      <div class="section-heading">
         <div>
-          <div class="section-label">PLAYER DASHBOARD</div>
-          <h1>Ready to <span class="accent">Play?</span></h1>
-          <p class="muted">স্বাগতম, <strong id="profile-name">Player</strong></p>
-          <p class="muted small" id="profile-email"></p>
+          <div class="section-label">FIND YOUR NEXT MATCH</div>
+          <h2>🔥 Available Tournaments</h2>
         </div>
-        <div class="online-pill"><span></span> PLAYER ONLINE</div>
-      </section>
-
-      <!-- BALANCE CARD -->
-      <section class="balance-card">
-        <div class="balance-top">
-          <span class="balance-caption">◈ YOUR DEMO WALLET</span>
-          <span class="demo-pill">DEMO ONLY</span>
-        </div>
-        <p class="balance-label">Available Balance</p>
-        <div class="balance-amount"><strong id="balance">0</strong><span>PTS</span></div>
-        <p class="balance-foot">এই পয়েন্ট শুধু ওয়েবসাইটে পরীক্ষার জন্য।</p>
-        <div class="balance-bottom">
-          <a href="#wallet" class="wallet-action">＋ Add Points</a>
-          <a href="#wallet" class="wallet-action light">↗ Manage Wallet</a>
-        </div>
-        <div class="balance-decoration">PX</div>
-      </section>
-
-      <!-- STATS -->
-      <section class="stats-grid">
-        <article class="stat-card">
-          <span class="stat-icon blue-icon">🎮</span>
-          <span class="stat-name">MY MATCHES</span>
-          <strong id="home-joined">0</strong>
-          <small>Joined tournaments</small>
-        </article>
-        <article class="stat-card">
-          <span class="stat-icon gold-icon">🏆</span>
-          <span class="stat-name">TOURNAMENTS</span>
-          <strong>FF</strong>
-          <small>Battle for glory</small>
-        </article>
-      </section>
-
-      <!-- TOURNAMENTS -->
-      <section id="tournaments" class="content-section">
-        <div class="section-heading">
-          <div>
-            <div class="section-label">FIND YOUR NEXT MATCH</div>
-            <h2>🔥 Available Tournaments</h2>
-          </div>
-          <span class="live-pill">● LIVE</span>
-        </div>
-        <div id="tournament-list" class="card-grid">Tournament লোড হচ্ছে...</div>
-      </section>
-
-      <!-- WALLET -->
-      <section id="wallet" class="content-section">
-        <div class="section-heading">
-          <div>
-            <div class="section-label">MANAGE YOUR POINTS</div>
-            <h2>◈ Demo Wallet</h2>
-          </div>
-        </div>
-
-        <div class="wallet-summary">
-          <div>
-            <span class="balance-caption">CURRENT DEMO BALANCE</span>
-            <strong><span id="wallet-balance">0</span> PTS</strong>
-          </div>
-          <span class="wallet-summary-icon">◈</span>
-        </div>
-
-        <div class="wallet-options">
-          <a href="#wallet-request" class="wallet-option">
-            <span class="option-icon add-icon">＋</span>
-            <strong>Add Points</strong>
-            <small>Request demo credit</small>
-          </a>
-          <a href="#wallet-request" class="wallet-option">
-            <span class="option-icon withdraw-icon">↗</span>
-            <strong>Withdraw Points</strong>
-            <small>Request demo deduction</small>
-          </a>
-        </div>
-
-        <div id="wallet-request" class="panel">
-          <div class="section-label">WALLET REQUEST</div>
-          <h3>Send a Request</h3>
-          <p class="muted">অনুরোধ Admin অনুমোদন করলে Demo Balance পরিবর্তন হবে।</p>
-
-          <form id="request-form">
-            <label for="request-type">Request Type</label>
-            <select id="request-type">
-              <option value="add">＋ Demo Balance যোগের অনুরোধ</option>
-              <option value="withdraw">↗ Demo Balance কমানোর অনুরোধ</option>
-            </select>
-
-            <label for="request-amount">Amount (Demo Points)</label>
-            <input id="request-amount" type="number" min="1" max="1000" step="1" placeholder="যেমন 100" required>
-
-            <label for="demo-reference">Demo Reference (৮–৪০ অক্ষর)</label>
-            <input id="demo-reference" minlength="8" maxlength="40" placeholder="DemoRef123" required>
-
-            <button type="submit" class="full-btn gold-btn">SUBMIT REQUEST →</button>
-          </form>
-          <p class="muted small">এটি বাস্তব Deposit বা বাস্তব টাকা তোলার ব্যবস্থা নয়।</p>
-        </div>
-      </section>
-
-      <!-- JOINED MATCHES -->
-      <section id="matches" class="content-section">
-        <div class="section-heading">
-          <div>
-            <div class="section-label">YOUR BATTLES</div>
-            <h2>🎯 My Joined Matches</h2>
-          </div>
-        </div>
-        <div id="joined-list" class="card-grid">লোড হচ্ছে...</div>
-      </section>
-
-      <!-- RESULTS -->
-      <section id="results" class="content-section">
-        <div class="section-heading">
-          <div>
-            <div class="section-label">LATEST WINNERS</div>
-            <h2>🏆 Tournament Results</h2>
-          </div>
-        </div>
-        <div id="results-list" class="card-grid">লোড হচ্ছে...</div>
-      </section>
-
-      <!-- SUPPORT -->
-      <section id="support" class="content-section">
-        <div class="support-card">
-          <div class="support-icon">💬</div>
-          <div>
-            <div class="section-label">NEED HELP?</div>
-            <h2>Player Support</h2>
-            <p>অ্যাকাউন্ট বা Tournament সংক্রান্ত সাহায্যের জন্য Support-এ যোগাযোগ করো।</p>
-            <a class="support-link" href="https://wa.me/8801346022330" target="_blank" rel="noopener noreferrer">WhatsApp Support ↗</a>
-          </div>
-        </div>
-      </section>
-
-      <!-- ADMIN -->
-      <section id="admin-panel" class="content-section admin-section" hidden>
-        <div class="section-heading">
-          <div>
-            <div class="section-label">CONTROL CENTER</div>
-            <h2>🛡️ Admin Panel</h2>
-          </div>
-          <span class="admin-pill">ADMIN</span>
-        </div>
-
-        <div class="panel">
-          <h3>＋ Create Tournament</h3>
-          <form id="tournament-form">
-            <label for="t-title">Tournament Name</label>
-            <input id="t-title" minlength="3" maxlength="80" placeholder="Tournament-এর নাম" required>
-
-            <label for="t-fee">Entry Fee (Demo Points)</label>
-            <input id="t-fee" type="number" min="0" max="1000" step="1" value="0" required>
-
-            <label for="t-prize">Prize Pool (Demo Points)</label>
-            <input id="t-prize" type="number" min="0" max="100000" step="1" value="0" required>
-
-            <label for="t-slots">মোট Slot</label>
-            <input id="t-slots" type="number" min="1" max="100" step="1" value="48" required>
-
-            <button type="submit" class="full-btn">CREATE TOURNAMENT ＋</button>
-          </form>
-        </div>
-
-        <div class="panel">
-          <h3>💳 Add Demo Credit</h3>
-          <form id="credit-form">
-            <label for="credit-uid">Player UID</label>
-            <input id="credit-uid" placeholder="Firebase User UID" required>
-
-            <label for="credit-amount">Demo Points</label>
-            <input id="credit-amount" type="number" min="1" max="100000" step="1" required>
-
-            <button type="submit" class="full-btn gold-btn">ADD DEMO CREDIT</button>
-          </form>
-        </div>
-
-        <div class="panel">
-          <h3>🔐 Room ID / Password</h3>
-          <form id="room-form">
-            <label for="room-tournament">Tournament ID</label>
-            <input id="room-tournament" required>
-
-            <label for="room-id">Room ID</label>
-            <input id="room-id" required>
-
-            <label for="room-password">Room Password</label>
-            <input id="room-password" required>
-
-            <button type="submit" class="full-btn">SAVE ROOM DETAILS</button>
-          </form>
-        </div>
-
-        <div class="panel">
-          <h3>🏆 Publish Result</h3>
-          <form id="result-form">
-            <label for="result-tournament">Tournament ID</label>
-            <input id="result-tournament" required>
-
-            <label for="result-title">Tournament Name</label>
-            <input id="result-title" required>
-
-            <label for="result-winner">Winner Name</label>
-            <input id="result-winner" required>
-
-            <label for="result-position">Position</label>
-            <input id="result-position" type="number" min="1" max="100" step="1" required>
-
-            <label for="result-prize">Prize (Demo Points)</label>
-            <input id="result-prize" type="number" min="0" max="100000" step="1" required>
-
-            <button type="submit" class="full-btn">PUBLISH RESULT</button>
-          </form>
-        </div>
-
-        <div class="panel">
-          <div class="section-heading">
-            <div>
-              <div class="section-label">REVIEW PLAYER REQUESTS</div>
-              <h3>📋 Pending Demo Requests</h3>
-            </div>
-          </div>
-          <div id="admin-requests" class="card-grid">লোড হচ্ছে...</div>
-        </div>
-      </section>
+        <span class="live-pill">● LIVE</span>
+      </div>
+      <div id="tournament-list" class="card-grid">
+        Tournament লোড হচ্ছে...
+      </div>
     </section>
-  </main>
 
-  <!-- BOTTOM NAVIGATION -->
-  <nav class="bottom-nav" aria-label="Main navigation">
-    <a href="#home"><span>⌂</span><small>Home</small></a>
-    <a href="#tournaments"><span>🎮</span><small>Matches</small></a>
-    <a href="#wallet"><span>◈</span><small>Wallet</small></a>
-    <a href="#support"><span>☏</span><small>Support</small></a>
-    <a href="#admin-panel"><span>🛡️</span><small>Admin</small></a>
-  </nav>
+    <!-- WALLET REQUEST -->
+    <section id="wallet" class="content-section">
+      <div class="section-heading">
+        <div>
+          <div class="section-label">MANAGE YOUR POINTS</div>
+          <h2>◈ Demo Wallet</h2>
+        </div>
+      </div>
 
-  <footer>
-    <strong>PlayX FF Tournament</strong>
-    <p>Demo Balance Only · Play Fair, Play Smart</p>
-  </footer>
+      <div class="wallet-summary">
+        <div>
+          <span class="balance-caption">CURRENT DEMO BALANCE</span>
+          <strong><span id="wallet-balance">0</span> PTS</strong>
+        </div>
+        <span class="wallet-summary-icon">◈</span>
+      </div>
 
-  <script type="module" src="./app.js"></script>
+      <div class="panel">
+        <h3>Demo Balance Request</h3>
+        <p class="muted">অনুরোধ Admin অনুমোদন করলে Demo Balance পরিবর্তন হবে।</p>
+        <form id="request-form">
+          <label for="request-type">Request Type</label>
+          <select id="request-type">
+            <option value="add">Demo Balance যোগের অনুরোধ</option>
+            <option value="withdraw">Demo Balance কমানোর অনুরোধ</option>
+          </select>
+
+          <label for="request-amount">Amount (Demo Points)</label>
+          <input id="request-amount" type="number" min="1" max="1000"
+                 step="1" required>
+
+          <label for="demo-reference">Demo Reference (৮–৪০ অক্ষর)</label>
+          <input id="demo-reference" minlength="8" maxlength="40" required>
+
+          <button type="submit" class="full-btn gold-btn">REQUEST পাঠাও →</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- JOINED MATCHES -->
+    <section id="matches" class="content-section">
+      <div class="section-heading">
+        <div>
+          <div class="section-label">YOUR BATTLES</div>
+          <h2>🎯 My Joined Matches</h2>
+        </div>
+      </div>
+      <div id="joined-list" class="card-grid">লোড হচ্ছে...</div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results" class="content-section">
+      <div class="section-heading">
+        <div>
+          <div class="section-label">TOURNAMENT WINNERS</div>
+          <h2>🏆 Results</h2>
+        </div>
+      </div>
+      <div id="results-list" class="card-grid">লোড হচ্ছে...</div>
+    </section>
+
+    <!-- SUPPORT -->
+    <section id="support" class="content-section">
+      <div class="support-card">
+        <div class="support-icon">💬</div>
+        <div>
+          <div class="section-label">NEED HELP?</div>
+          <h2>Player Support</h2>
+          <p>সাহায্যের জন্য WhatsApp-এ যোগাযোগ করো।</p>
+          <a class="support-link"
+             href="https://wa.me/8801346022330"
+             target="_blank" rel="noopener noreferrer">
+            WhatsApp Support ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN PANEL -->
+    <section id="admin-panel" class="content-section" hidden>
+      <div class="section-heading">
+        <div>
+          <div class="section-label">CONTROL CENTER</div>
+          <h2>🛡️ Admin Panel</h2>
+        </div>
+        <span class="admin-pill">ADMIN</span>
+      </div>
+
+      <div class="panel">
+        <h3>＋ Tournament তৈরি</h3>
+        <form id="tournament-form">
+          <label for="t-title">Tournament Name</label>
+          <input id="t-title" minlength="3" maxlength="80" required>
+
+          <label for="t-fee">Entry Fee (Demo Points)</label>
+          <input id="t-fee" type="number" min="0" max="1000"
+                 step="1" value="0" required>
+
+          <label for="t-prize">Prize Pool (Demo Points)</label>
+          <input id="t-prize" type="number" min="0" max="100000"
+                 step="1" value="0" required>
+
+          <label for="t-slots">মোট Slot</label>
+          <input id="t-slots" type="number" min="1" max="100"
+                 step="1" value="48" required>
+
+          <button type="submit" class="full-btn">CREATE TOURNAMENT ＋</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>💳 Demo Credit যোগ করো</h3>
+        <form id="credit-form">
+          <label for="credit-uid">Player UID</label>
+          <input id="credit-uid" required>
+
+          <label for="credit-amount">Demo Points</label>
+          <input id="credit-amount" type="number" min="1" max="100000"
+                 step="1" required>
+
+          <button type="submit" class="full-btn gold-btn">ADD DEMO CREDIT</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>🔐 Room ID / Password</h3>
+        <form id="room-form">
+          <label for="room-tournament">Tournament ID</label>
+          <input id="room-tournament" required>
+
+          <label for="room-id">Room ID</label>
+          <input id="room-id" required>
+
+          <label for="room-password">Room Password</label>
+          <input id="room-password" required>
+
+          <button type="submit" class="full-btn">SAVE ROOM DETAILS</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>🏆 Result প্রকাশ</h3>
+        <form id="result-form">
+          <label for="result-tournament">Tournament ID</label>
+          <input id="result-tournament" required>
+
+          <label for="result-title">Tournament Name</label>
+          <input id="result-title" required>
+
+          <label for="result-winner">Winner Name</label>
+          <input id="result-winner" required>
+
+          <label for="result-position">Position</label>
+          <input id="result-position" type="number" min="1" max="100"
+                 step="1" required>
+
+          <label for="result-prize">Prize (Demo Points)</label>
+          <input id="result-prize" type="number" min="0" max="100000"
+                 step="1" required>
+
+          <button type="submit" class="full-btn">PUBLISH RESULT</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>📋 Pending Demo Requests</h3>
+        <div id="admin-requests">লোড হচ্ছে...</div>
+      </div>
+    </section>
+
+  </section>
+</main>
+
+<!-- JOIN FORM: Tournament Join Now চাপলে এটি খুলবে -->
+<div id="join-modal" class="join-modal" hidden>
+  <div class="join-box" role="dialog" aria-modal="true"
+       aria-labelledby="join-heading">
+    <button type="button" id="join-close" class="join-close"
+            aria-label="Close">✕</button>
+
+    <div class="section-label">TOURNAMENT REGISTRATION</div>
+    <h2 id="join-heading">🎮 Join Tournament</h2>
+    <p id="join-tournament-name" class="muted">Tournament</p>
+
+    <form id="ff-join-form">
+      <label for="ff-player-name">Free Fire In-Game Name</label>
+      <input id="ff-player-name" maxlength="40"
+             placeholder="তোমার গেমের নাম" required>
+
+      <label for="ff-player-uid">Free Fire UID</label>
+      <input id="ff-player-uid" type="text" inputmode="numeric"
+             pattern="[0-9]{6,15}" minlength="6" maxlength="15"
+             placeholder="তোমার Free Fire UID" required>
+
+      <p class="muted small">
+        UID ৬–১৫ সংখ্যার হতে হবে। সঠিক UID দেবে।
+      </p>
+
+      <button type="submit" class="full-btn gold-btn">
+        CONFIRM & JOIN →
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- MOBILE NAVIGATION -->
+<nav class="bottom-nav" aria-label="Main navigation">
+  <a href="#home"><span>⌂</span><small>Home</small></a>
+  <a href="#tournaments"><span>🎮</span><small>Matches</small></a>
+  <a href="#wallet"><span>◈</span><small>Wallet</small></a>
+  <a href="#support"><span>☏</span><small>Support</small></a>
+  <a href="#admin-panel"><span>🛡️</span><small>Admin</small></a>
+</nav>
+
+<footer>
+  <strong>PlayX FF Tournament</strong>
+  <p>Demo Balance Only · Play Fair, Play Smart</p>
+</footer>
+
+<script type="module" src="./app.js"></script>
 </body>
 </html>
