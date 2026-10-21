@@ -1,4 +1,3 @@
-
 import { auth, db } from "./firebase-config.js";
 
 import {
@@ -26,6 +25,8 @@ const ADMIN_EMAIL = "jafor99a@gmail.com";
 
 let currentUser = null;
 let isAdminUser = false;
+let selectedTournament = null;
+let busy = false;
 
 const $ = id => document.getElementById(id);
 
@@ -49,9 +50,7 @@ function esc(value) {
 function numberField(value, min, max, label) {
   const n = Number(value);
   if (!Number.isSafeInteger(n) || n < min || n > max) {
-    throw new Error(
-      `${label}: ${min} থেকে ${max} পর্যন্ত পূর্ণ সংখ্যা দাও।`
-    );
+    throw new Error(`${label}: ${min} থেকে ${max} পর্যন্ত পূর্ণ সংখ্যা দাও।`);
   }
   return n;
 }
@@ -70,6 +69,7 @@ function showSignedInUI(user) {
   $("app-section").hidden = !user;
   $("logout-btn").hidden = !user;
   $("admin-panel").hidden = !isAdminUser;
+  $("admin-nav").hidden = !isAdminUser;
 }
 
 async function ensureProfile(user, name = "") {
@@ -89,34 +89,29 @@ async function ensureProfile(user, name = "") {
     const data = snap.data();
     const changes = { lastLoginAt: serverTimestamp() };
 
-    if (!Number.isSafeInteger(data.demoBalance)) {
-      changes.demoBalance = 0;
-    }
+    if (!data.email && user.email) changes.email = user.email;
 
-    if (!data.email && user.email) {
-      changes.email = user.email;
-    }
-
+    // Existing profile-এ balance অনুপস্থিত হলে নিজে থেকে balance
+    // তৈরি করা যাবে না; Admin-এর সাহায্য নিতে হবে।
     await updateDoc(ref, changes);
   }
 }
 
-/* LOGIN */
+/* AUTH */
 $("auth-form").addEventListener("submit", async event => {
   event.preventDefault();
-
   try {
-    const email = $("email").value.trim().toLowerCase();
-    const password = $("password").value;
-
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(
+      auth,
+      $("email").value.trim().toLowerCase(),
+      $("password").value
+    );
     msg("Login সফল হয়েছে।", "success");
   } catch (error) {
     msg("Login ব্যর্থ: " + error.message, "error");
   }
 });
 
-/* REGISTER */
 $("register-btn").addEventListener("click", async () => {
   try {
     const email = $("email").value.trim().toLowerCase();
@@ -126,10 +121,7 @@ $("register-btn").addEventListener("click", async () => {
     if (!email || password.length < 6) {
       throw new Error("Email দাও এবং Password কমপক্ষে ৬ অক্ষর রাখো।");
     }
-
-    if (!name) {
-      throw new Error("Register করার জন্য নাম দাও।");
-    }
+    if (!name) throw new Error("Register করার জন্য নাম দাও।");
 
     const credential = await createUserWithEmailAndPassword(
       auth, email, password
@@ -142,7 +134,6 @@ $("register-btn").addEventListener("click", async () => {
   }
 });
 
-/* LOGOUT */
 $("logout-btn").addEventListener("click", async () => {
   try {
     await signOut(auth);
@@ -152,14 +143,12 @@ $("logout-btn").addEventListener("click", async () => {
   }
 });
 
-/* LOGIN STATE */
 onAuthStateChanged(auth, async user => {
   currentUser = user;
-  isAdminUser =
-    !!user && user.email?.toLowerCase() === ADMIN_EMAIL;
+  isAdminUser = !!user &&
+    user.email?.toLowerCase() === ADMIN_EMAIL;
 
   showSignedInUI(user);
-
   if (!user) return;
 
   try {
@@ -170,10 +159,8 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-/* REFRESH */
 async function refreshApp() {
   requireUser();
-
   await Promise.all([
     loadProfile(),
     loadTournaments(),
@@ -181,21 +168,14 @@ async function refreshApp() {
     loadResults()
   ]);
 
-  if (isAdminUser) {
-    await loadAdminRequests();
-  }
+  if (isAdminUser) await loadAdminRequests();
 }
 
-/* PROFILE + DEMO BALANCE */
 async function loadProfile() {
   const snap = await getDoc(doc(db, "users", currentUser.uid));
-
-  if (!snap.exists()) {
-    throw new Error("User Profile পাওয়া যায়নি।");
-  }
+  if (!snap.exists()) throw new Error("User Profile পাওয়া যায়নি।");
 
   const data = snap.data();
-
   $("profile-name").textContent = data.displayName || "Player";
   $("profile-email").textContent = data.email || currentUser.email || "";
   $("balance").textContent = String(data.demoBalance ?? 0);
@@ -219,6 +199,7 @@ async function loadTournaments() {
     const prize = Number.isSafeInteger(t.prizePool) ? t.prizePool : 0;
     const slots = Number.isSafeInteger(t.slots) ? t.slots : 48;
     const joined = Number.isSafeInteger(t.joinCount) ? t.joinCount : 0;
+    const closed = t.status === "closed" || joined >= slots;
 
     return `
       <article class="card">
@@ -226,40 +207,83 @@ async function loadTournaments() {
         <p>🎟️ Entry Fee: ${fee} Demo Points</p>
         <p>🏆 Prize Pool: ${prize} Demo Points</p>
         <p>👥 Slots: ${joined} / ${slots}</p>
-        <p class="muted">Tournament ID: ${esc(item.id)}</p>
-        <button type="button" data-join="${esc(item.id)}">
-          Join Now
+        <p class="muted small">Tournament ID: ${esc(item.id)}</p>
+        <button type="button" data-join="${esc(item.id)}"
+          ${closed ? "disabled" : ""}>
+          ${closed ? "Tournament বন্ধ" : "Join Now"}
         </button>
-      </article>
-    `;
+      </article>`;
   }).join("");
 
   host.querySelectorAll("[data-join]").forEach(button => {
-    button.addEventListener("click", async () => {
-      button.disabled = true;
+    button.addEventListener("click", () => {
+      selectedTournament = button.dataset.join;
+      const item = snap.docs.find(d => d.id === selectedTournament);
+      if (!item) return;
 
-      try {
-        await joinTournament(button.dataset.join);
-        await refreshApp();
-      } catch (error) {
-        msg("Join ব্যর্থ: " + error.message, "error");
-      } finally {
-        button.disabled = false;
-      }
+      $("join-tournament-name").textContent =
+        item.data().title || "Tournament";
+      $("ff-join-form").reset();
+      $("join-modal").showModal();
     });
   });
 }
 
-/* SAFE TRANSACTION: BALANCE CUT + JOIN */
-async function joinTournament(tournamentId) {
+/* JOIN + DEMO BALANCE TRANSACTION */
+$("join-close").addEventListener("click", () => {
+  $("join-modal").close();
+});
+
+$("ff-join-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (busy) return;
+
+  const playerName = $("ff-player-name").value.trim();
+  const freeFireUid = $("ff-player-uid").value.trim();
+
+  if (playerName.length < 2 || playerName.length > 60) {
+    msg("Free Fire Player Name ২–৬০ অক্ষরের হতে হবে।", "error");
+    return;
+  }
+  if (!/^[0-9]{5,20}$/.test(freeFireUid)) {
+    msg("Free Fire UID ৫–২০ সংখ্যার হতে হবে।", "error");
+    return;
+  }
+
+  busy = true;
+  const submitButton = $("ff-join-form").querySelector(
+    'button[type="submit"]'
+  );
+  submitButton.disabled = true;
+
+  try {
+    const result = await joinTournament(
+      selectedTournament, playerName, freeFireUid
+    );
+    $("join-modal").close();
+    msg(
+      `Join সফল! ${result.fee} Demo Points কাটা হয়েছে। অবশিষ্ট ${result.balance}।`,
+      "success"
+    );
+    await refreshApp();
+  } catch (error) {
+    msg("Join ব্যর্থ: " + error.message, "error");
+  } finally {
+    busy = false;
+    submitButton.disabled = false;
+  }
+});
+
+async function joinTournament(tournamentId, playerName, freeFireUid) {
   requireUser();
 
   const userRef = doc(db, "users", currentUser.uid);
   const tournamentRef = doc(db, "tournaments", tournamentId);
-  const joinId = `${tournamentId}_${currentUser.uid}`;
-  const joinRef = doc(db, "tournamentJoins", joinId);
+  const joinRef = doc(
+    db, "tournamentJoins", `${tournamentId}_${currentUser.uid}`
+  );
 
-  const result = await runTransaction(db, async transaction => {
+  return runTransaction(db, async transaction => {
     const userSnap = await transaction.get(userRef);
     const tournamentSnap = await transaction.get(tournamentRef);
     const joinSnap = await transaction.get(joinRef);
@@ -271,34 +295,26 @@ async function joinTournament(tournamentId) {
     const user = userSnap.data();
     const t = tournamentSnap.data();
 
-    const balance = numberField(
-      user.demoBalance ?? 0, 0, 100000000, "Demo Balance"
-    );
-    const fee = numberField(t.entryFee ?? 0, 0, 1000, "Entry Fee");
+    const balance = numberField(user.demoBalance, 0, 100000000, "Demo Balance");
+    const fee = numberField(t.entryFee, 0, 1000, "Entry Fee");
     const slots = numberField(t.slots, 1, 100, "Slots");
-    const joined = numberField(t.joinCount ?? 0, 0, 100, "Join Count");
+    const joined = numberField(t.joinCount, 0, 100, "Join Count");
 
-    if (t.status === "closed") {
-      throw new Error("এই Tournament বন্ধ।");
-    }
+    if (t.status === "closed") throw new Error("Tournament বন্ধ।");
+    if (joined >= slots) throw new Error("সব Slot পূর্ণ।");
+    if (balance < fee) throw new Error("Demo Balance যথেষ্ট নয়।");
 
-    if (joined >= slots) throw new Error("সব Slot পূর্ণ হয়ে গেছে।");
-
-    if (balance < fee) {
-      throw new Error(
-        `Demo Balance কম। Entry Fee ${fee}, তোমার Balance ${balance}।`
-      );
-    }
-
-  transaction.update(userRef, {
-  demoBalance: balance - fee,
-  lastEntryTournamentId: tournamentId
-});
+    transaction.update(userRef, {
+      demoBalance: balance - fee,
+      lastEntryTournamentId: tournamentId
+    });
 
     transaction.set(joinRef, {
       userId: currentUser.uid,
       tournamentId,
       tournamentTitle: t.title || "Tournament",
+      playerName,
+      freeFireUid,
       status: "joined",
       createdAt: serverTimestamp()
     });
@@ -309,17 +325,10 @@ async function joinTournament(tournamentId) {
 
     return { fee, balance: balance - fee };
   });
-
-  msg(
-    `Join সফল! ${result.fee} Demo Points কাটা হয়েছে। অবশিষ্ট ${result.balance}।`,
-    "success"
-  );
 }
 
-/* MY JOINED MATCHES */
+/* JOINED MATCHES */
 async function loadJoined() {
-  requireUser();
-
   const q = query(
     collection(db, "tournamentJoins"),
     where("userId", "==", currentUser.uid)
@@ -335,7 +344,7 @@ async function loadJoined() {
 
   const rows = await Promise.all(snap.docs.map(async item => {
     const data = item.data();
-    let roomHTML = "";
+    let roomHTML = "<p class='muted'>Room Details এখনো পাওয়া যায়নি।</p>";
 
     try {
       const roomSnap = await getDoc(
@@ -346,21 +355,20 @@ async function loadJoined() {
         const room = roomSnap.data();
         roomHTML = `
           <p>Room ID: ${esc(room.roomId)}</p>
-          <p>Room Password: ${esc(room.roomPassword)}</p>
-        `;
+          <p>Room Password: ${esc(room.roomPassword)}</p>`;
       }
     } catch {
-      roomHTML = '<p class="muted">Room Details এখনো পাওয়া যায়নি।</p>';
+      // Room তথ্য না থাকলে Join তালিকা দেখানো হবে।
     }
 
     return `
       <article class="card">
         <h3>${esc(data.tournamentTitle || "Tournament")}</h3>
+        <p>Player: ${esc(data.playerName || "Player")}</p>
+        <p>Free Fire UID: ${esc(data.freeFireUid || "")}</p>
         <p>Status: ${esc(data.status || "joined")}</p>
-        <p class="muted">ID: ${esc(data.tournamentId)}</p>
         ${roomHTML}
-      </article>
-    `;
+      </article>`;
   }));
 
   $("joined-list").innerHTML = rows.join("");
@@ -377,19 +385,17 @@ async function loadResults() {
 
   $("results-list").innerHTML = snap.docs.map(item => {
     const r = item.data();
-
     return `
       <article class="card">
-        <h3>${esc(r.tournamentTitle || "Tournament")}</h3>
+        <h3>${esc(r.tournamentTitle)}</h3>
         <p>Winner: ${esc(r.winner)}</p>
         <p>Position: ${esc(r.position)}</p>
         <p>Prize: ${esc(r.prize)} Demo Points</p>
-      </article>
-    `;
+      </article>`;
   }).join("");
 }
 
-/* PLAYER DEMO BALANCE REQUEST */
+/* DEMO BALANCE REQUEST */
 $("request-form").addEventListener("submit", async event => {
   event.preventDefault();
 
@@ -399,14 +405,12 @@ $("request-form").addEventListener("submit", async event => {
     const amount = numberField(
       $("request-amount").value, 1, 1000, "Amount"
     );
-
     const type = $("request-type").value;
     const reference = $("demo-reference").value.trim();
 
     if (!["add", "withdraw"].includes(type)) {
       throw new Error("Request Type সঠিক নয়।");
     }
-
     if (reference.length < 8 || reference.length > 40) {
       throw new Error("Demo Reference ৮–৪০ অক্ষরের হতে হবে।");
     }
@@ -421,12 +425,7 @@ $("request-form").addEventListener("submit", async event => {
     });
 
     $("request-form").reset();
-
-    msg(
-      "Request পাঠানো হয়েছে। Admin অনুমোদন না করা পর্যন্ত Balance বদলাবে না।",
-      "success"
-    );
-
+    msg("Demo Request পাঠানো হয়েছে।", "success");
     if (isAdminUser) await loadAdminRequests();
   } catch (error) {
     msg("Request ব্যর্থ: " + error.message, "error");
@@ -445,17 +444,11 @@ $("tournament-form").addEventListener("submit", async event => {
       throw new Error("Tournament Name ৩–৮০ অক্ষরের হতে হবে।");
     }
 
-    const entryFee = numberField($("t-fee").value, 0, 1000, "Entry Fee");
-    const prizePool = numberField(
-      $("t-prize").value, 0, 100000, "Prize Pool"
-    );
-    const slots = numberField($("t-slots").value, 1, 100, "Slots");
-
     await addDoc(collection(db, "tournaments"), {
       title,
-      entryFee,
-      prizePool,
-      slots,
+      entryFee: numberField($("t-fee").value, 0, 1000, "Entry Fee"),
+      prizePool: numberField($("t-prize").value, 0, 100000, "Prize Pool"),
+      slots: numberField($("t-slots").value, 1, 100, "Slots"),
       joinCount: 0,
       status: "open",
       createdBy: currentUser.uid,
@@ -470,7 +463,7 @@ $("tournament-form").addEventListener("submit", async event => {
   }
 });
 
-/* ADMIN: ADD DEMO BALANCE */
+/* ADMIN: ADD DEMO POINTS */
 $("credit-form").addEventListener("submit", async event => {
   event.preventDefault();
 
@@ -481,38 +474,31 @@ $("credit-form").addEventListener("submit", async event => {
     const amount = numberField(
       $("credit-amount").value, 1, 100000, "Demo Credit"
     );
-
     const userRef = doc(db, "users", uid);
 
     await runTransaction(db, async transaction => {
       const snap = await transaction.get(userRef);
-      if (!snap.exists()) throw new Error("এই UID-এর User নেই।");
+      if (!snap.exists()) throw new Error("Player Profile নেই।");
 
-      const current = numberField(
-        snap.data().demoBalance ?? 0,
-        0,
-        100000000,
-        "বর্তমান Balance"
+      const balance = numberField(
+        snap.data().demoBalance, 0, 100000000, "বর্তমান Balance"
       );
-
-      if (current + amount > 100000000) {
+      if (balance + amount > 100000000) {
         throw new Error("Balance সর্বোচ্চ সীমা ছাড়িয়ে যাবে।");
       }
 
-      transaction.update(userRef, {
-        demoBalance: current + amount
-      });
+      transaction.update(userRef, { demoBalance: balance + amount });
     });
 
     $("credit-form").reset();
-    msg("Demo Balance যোগ হয়েছে।", "success");
+    msg("Demo Points যোগ হয়েছে।", "success");
     await loadProfile();
   } catch (error) {
     msg("Demo Credit ব্যর্থ: " + error.message, "error");
   }
 });
 
-/* ADMIN: SAVE ROOM DETAILS */
+/* ADMIN: ROOM DETAILS */
 $("room-form").addEventListener("submit", async event => {
   event.preventDefault();
 
@@ -523,14 +509,9 @@ $("room-form").addEventListener("submit", async event => {
     const roomId = $("room-id").value.trim();
     const roomPassword = $("room-password").value;
 
-    if (!tournamentId || !roomId || !roomPassword) {
-      throw new Error("সব Room ফিল্ড পূরণ করো।");
-    }
-
     const tournamentSnap = await getDoc(
       doc(db, "tournaments", tournamentId)
     );
-
     if (!tournamentSnap.exists()) {
       throw new Error("Tournament ID পাওয়া যায়নি।");
     }
@@ -559,17 +540,12 @@ $("result-form").addEventListener("submit", async event => {
     const tournamentId = $("result-tournament").value.trim();
     const tournamentTitle = $("result-title").value.trim();
     const winner = $("result-winner").value.trim();
-    const position = numberField(
-      $("result-position").value, 1, 100, "Position"
-    );
-    const prize = numberField(
-      $("result-prize").value, 0, 100000, "Prize"
-    );
+    const position = numberField($("result-position").value, 1, 100, "Position");
+    const prize = numberField($("result-prize").value, 0, 100000, "Prize");
 
     const tournamentSnap = await getDoc(
       doc(db, "tournaments", tournamentId)
     );
-
     if (!tournamentSnap.exists()) {
       throw new Error("Tournament ID পাওয়া যায়নি।");
     }
@@ -592,20 +568,13 @@ $("result-form").addEventListener("submit", async event => {
   }
 });
 
-/* ADMIN: PENDING REQUESTS + APPROVE/REJECT */
+/* ADMIN: REQUESTS */
 async function loadAdminRequests() {
-  if (!isAdminUser) return;
+  requireAdmin();
 
   const host = $("admin-requests");
-  host.textContent = "Request লোড হচ্ছে...";
-
-  const snap = await getDocs(
-    collection(db, "demoBalanceRequests")
-  );
-
-  const pending = snap.docs.filter(
-    item => item.data().status === "pending"
-  );
+  const snap = await getDocs(collection(db, "demoBalanceRequests"));
+  const pending = snap.docs.filter(d => d.data().status === "pending");
 
   if (!pending.length) {
     host.textContent = "কোনো Pending Request নেই।";
@@ -614,33 +583,27 @@ async function loadAdminRequests() {
 
   host.innerHTML = pending.map(item => {
     const r = item.data();
-
     return `
       <article class="card">
-        <p>Type: ${r.type === "add" ? "Balance যোগ" : "Balance কমানো"}</p>
+        <p>Type: ${esc(r.type)}</p>
         <p>Amount: ${esc(r.amount)} Demo Points</p>
         <p>Player UID: ${esc(r.userId)}</p>
         <p>Reference: ${esc(r.demoTransactionId)}</p>
-        <p>Status: Pending</p>
-        <button type="button" data-approve="${esc(item.id)}">
-          Approve
-        </button>
-        <button type="button" class="secondary"
-          data-reject="${esc(item.id)}">
+        <button data-approve="${esc(item.id)}">Approve</button>
+        <button class="secondary" data-reject="${esc(item.id)}">
           Reject
         </button>
-      </article>
-    `;
+      </article>`;
   }).join("");
 
   host.querySelectorAll("[data-approve]").forEach(button => {
     button.addEventListener("click", async () => {
       button.disabled = true;
-
       try {
         await decideRequest(button.dataset.approve, true);
-        msg("Request Approve হয়েছে।", "success");
+        msg("Demo Request Approve হয়েছে।", "success");
         await loadAdminRequests();
+        await loadProfile();
       } catch (error) {
         msg("Approve ব্যর্থ: " + error.message, "error");
         button.disabled = false;
@@ -651,7 +614,6 @@ async function loadAdminRequests() {
   host.querySelectorAll("[data-reject]").forEach(button => {
     button.addEventListener("click", async () => {
       button.disabled = true;
-
       try {
         await decideRequest(button.dataset.reject, false);
         msg("Request Reject হয়েছে।", "success");
@@ -664,7 +626,6 @@ async function loadAdminRequests() {
   });
 }
 
-/* ADMIN: PROCESS REQUEST ONCE */
 async function decideRequest(requestId, approve) {
   requireAdmin();
 
@@ -672,43 +633,29 @@ async function decideRequest(requestId, approve) {
 
   await runTransaction(db, async transaction => {
     const requestSnap = await transaction.get(requestRef);
-
-    if (!requestSnap.exists()) {
-      throw new Error("Request পাওয়া যায়নি।");
-    }
+    if (!requestSnap.exists()) throw new Error("Request পাওয়া যায়নি।");
 
     const request = requestSnap.data();
-
     if (request.status !== "pending") {
-      throw new Error("এই Request আগে থেকেই প্রক্রিয়া করা হয়েছে।");
+      throw new Error("Request আগেই প্রক্রিয়া করা হয়েছে।");
     }
 
     let userRef = null;
-    let userSnap = null;
     let newBalance = null;
 
     if (approve) {
       userRef = doc(db, "users", request.userId);
-      userSnap = await transaction.get(userRef);
+      const userSnap = await transaction.get(userRef);
 
-      if (!userSnap.exists()) {
-        throw new Error("Player Profile পাওয়া যায়নি।");
-      }
+      if (!userSnap.exists()) throw new Error("Player Profile নেই।");
 
       const balance = numberField(
-        userSnap.data().demoBalance ?? 0,
-        0,
-        100000000,
-        "বর্তমান Balance"
+        userSnap.data().demoBalance, 0, 100000000, "বর্তমান Balance"
       );
-
-      const amount = numberField(
-        request.amount, 1, 1000, "Request Amount"
-      );
+      const amount = numberField(request.amount, 1, 1000, "Request Amount");
 
       if (request.type === "add") {
         newBalance = balance + amount;
-
         if (newBalance > 100000000) {
           throw new Error("Balance সর্বোচ্চ সীমা ছাড়িয়ে যাবে।");
         }
@@ -716,17 +663,12 @@ async function decideRequest(requestId, approve) {
         if (balance < amount) {
           throw new Error("Player-এর Demo Balance যথেষ্ট নয়।");
         }
-
         newBalance = balance - amount;
       } else {
         throw new Error("Request Type ভুল।");
       }
-    }
 
-    if (approve && userRef) {
-      transaction.update(userRef, {
-        demoBalance: newBalance
-      });
+      transaction.update(userRef, { demoBalance: newBalance });
     }
 
     transaction.update(requestRef, {
