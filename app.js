@@ -290,9 +290,10 @@ async function joinTournament(tournamentId) {
       );
     }
 
-    transaction.update(userRef, {
-      demoBalance: balance - fee
-    });
+  transaction.update(userRef, {
+  demoBalance: balance - fee,
+  lastEntryTournamentId: tournamentId
+});
 
     transaction.set(joinRef, {
       userId: currentUser.uid,
