@@ -1,0 +1,35 @@
+function validJoinTransaction(tid, uid) {
+  let userBefore = get(userPath(uid)).data;
+  let userAfter = getAfter(userPath(uid)).data;
+  let tournamentBefore = get(tournamentPath(tid)).data;
+  let tournamentAfter = getAfter(tournamentPath(tid)).data;
+  let joinAfter = getAfter(joinPath(tid, uid)).data;
+
+  return self(uid)
+    && exists(userPath(uid))
+    && exists(tournamentPath(tid))
+    && !exists(joinPath(tid, uid))
+    && tournamentBefore.status == 'open'
+    && tournamentBefore.entryFee is int
+    && tournamentBefore.entryFee >= 0
+    && tournamentBefore.entryFee <= 1000
+    && tournamentBefore.slots is int
+    && tournamentBefore.slots >= 1
+    && tournamentBefore.slots <= 100
+    && tournamentBefore.joinCount is int
+    && tournamentBefore.joinCount < tournamentBefore.slots
+    && userBefore.demoBalance is int
+    && userBefore.demoBalance >= tournamentBefore.entryFee
+    && userAfter.demoBalance ==
+         userBefore.demoBalance - tournamentBefore.entryFee
+    && userAfter.lastEntryTournamentId == tid
+    && tournamentAfter.joinCount == tournamentBefore.joinCount + 1
+    && joinAfter.userId == uid
+    && joinAfter.tournamentId == tid
+    && joinAfter.status == 'joined'
+    && joinAfter.playerName is string
+    && joinAfter.playerName.size() >= 2
+    && joinAfter.playerName.size() <= 60
+    && joinAfter.freeFireUid is string
+    && joinAfter.freeFireUid.matches('^[0-9]{5,20}$');
+}
