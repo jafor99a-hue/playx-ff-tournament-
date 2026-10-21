@@ -587,4 +587,29 @@ onAuthStateChanged(auth, async user => {
   if (!user) {
     isAdmin = false;
     $("auth-section").classList.remove("hidden");
-    $("app-section").classList.add("hidde
+    $("app-section").classList.add("hidden");
+    $("logout-btn").classList.add("hidden");
+    $("admin-nav").classList.add("hidden");
+    $("admin-panel").classList.add("hidden");
+    return;
+  }
+
+  try {
+    await ensureProfile(user);
+    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    $("auth-section").classList.add("hidden");
+    $("app-section").classList.remove("hidden");
+    $("logout-btn").classList.remove("hidden");
+    $("profile-name").textContent = user.displayName || "Player";
+    $("profile-email").textContent = user.email || "";
+    $("admin-nav").classList.toggle("hidden", !isAdmin);
+    $("admin-panel").classList.toggle("hidden", !isAdmin);
+
+    await Promise.all([
+      refreshBalance(), loadTournaments(), loadJoined(), loadResults()
+    ]);
+    if (isAdmin) await loadAdminRequests();
+    showPage("home-section");
+  } catch (error) {
+    errorMessage(error);
+  }
