@@ -1,792 +1,358 @@
 
-import app from "./firebase-config.js";
-
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  getDoc,
-  doc,
-  setDoc,
-  query,
-  where,
-  orderBy,
-  runTransaction,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-let currentUser = null;
-let selectedTournament = null;
-let tournamentsCache = [];
-
-const $ = (selector) => document.querySelector(selector);
-
-function toast(message) {
-  const el = $("#toast");
-  if (el) {
-    el.textContent = message;
-    el.hidden = false;
-  } else {
-    alert(message);
-  }
-}
-
-function money(value) {
-  return "৳" + Number(value || 0).toLocaleString("en-BD");
-}
-
-function value(id) {
-  return $("#" + id)?.value?.trim() || "";
-}
-
-function isAdmin(token) {
-  return token?.claims?.admin === true;
-}
-
-async function requireAdmin() {
-  if (!currentUser) {
-    toast("আগে Login করো।");
-    return false;
-  }
-
-  const token = await currentUser.getIdTokenResult(true);
-
-  if (!isAdmin(token)) {
-    toast("তোমার Admin permission নেই।");
-    return false;
-  }
-
-  return true;
-}
-
-// ---------- Login / Register ----------
-
-let authMode = "register";
-
-function setAuthMode(mode) {
-  authMode = mode;
-
-  const nameWrap = $("#displayNameWrap");
-  const submit = $("#authSubmit");
-
-  if (nameWrap) nameWrap.hidden = mode !== "register";
-  if (submit) submit.textContent =
-    mode === "register" ? "Register" : "Login";
-
-  const password = $("#password");
-  if (password) {
-    password.autocomplete =
-      mode === "register" ? "new-password" : "current-password";
-  }
-
-  $("#account")?.scrollIntoView({ behavior: "smooth" });
-}
-
-$("#loginBtn")?.addEventListener("click", () => setAuthMode("login"));
-$("#registerBtn")?.addEventListener("click", () => setAuthMode("register"));
-
-$("#authForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const email = value("email");
-  const password = $("#password")?.value || "";
-  const displayName = value("displayName");
-  const message = $("#authMessage");
-
-  try {
-    if (message) message.textContent = "অপেক্ষা করো...";
-
-    if (authMode === "register") {
-      if (password.length < 6) {
-        throw new Error("Password কমপক্ষে ৬ অক্ষরের হতে হবে।");
-      }
-
-      const credential = await createUserWithEmailAndPassword(
-        auth, email, password
-      );
-
-      if (displayName) {
-        await updateProfile(credential.user, { displayName });
-      }
-
-      if (message) message.textContent = "Registration সফল হয়েছে।";
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-      if (message) message.textContent = "Login সফল হয়েছে।";
-    }
-  } catch (error) {
-    console.error("Authentication:", error);
-    if (message) {
-      message.textContent = error.message || "Login/Register সফল হয়নি।";
-    }
-  }
-});
-
-$("#logoutBtn")?.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    toast("Logout হয়েছে।");
-  } catch (error) {
-    toast(error.message);
-  }
-});
-
-function updateUserUI(user, admin) {
-  const status = $("#userStatus");
-  const title = $("#accountTitle");
-  const authForm = $("#authForm");
-
-  if (status) {
-    status.textContent = user
-      ? `Login: ${user.email || ""}${admin ? " (Admin)" : ""}`
-      : "লগইন করা হয়নি";
-  }
-
-  if (title) {
-    title.textContent = user
-      ? `স্বাগতম ${user.displayName || user.email || ""}`
-      : "Welcome to PlayX";
-  }
-
-  if (authForm) authForm.hidden = !!user;
-
-  if ($("#loginBtn")) $("#loginBtn").hidden = !!user;
-  if ($("#registerBtn")) $("#registerBtn").hidden = !!user;
-  if ($("#logoutBtn")) $("#logoutBtn").hidden = !user;
-
-  const adminPanel = $("#adminPanel");
-  if (adminPanel) adminPanel.hidden = !(user && admin);
-}
-
-// ---------- Tournament List ----------
-
-async function loadTournaments() {
-  const container = $("#tournamentList");
-  if (!container) return;
-
-  try {
-    const snap = await getDocs(
-      query(collection(db, "tournaments"), orderBy("createdAt", "desc"))
-    );
-
-    tournamentsCache = snap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
-
-    container.replaceChildren();
-
-    if (!tournamentsCache.length) {
-      container.textContent = "এখনো কোনো Tournament নেই।";
-    }
-
-    for (const t of tournamentsCache) {
-      const card = document.createElement("article");
-      card.className = "tournament-card";
-
-      const heading = document.createElement("h3");
-      heading.textContent = t.title || "Tournament";
-
-      const info = document.createElement("p");
-      info.textContent =
-        `Mode: ${t.mode || "—"} · Map: ${t.map || "—"} · Prize: ${t.prizeText || "—"}`;
-
-      const start = document.createElement("p");
-      start.textContent = "শুরু: " + (t.startTime || "সময় নির্ধারিত নয়");
-
-      const button = document.createElement("button");
-      button.className = "btn";
-      button.type = "button";
-      button.textContent = "Join Now";
-      button.addEventListener("click", () => joinTournament(t.id, t));
-
-      card.append(heading, info, start, button);
-      container.append(card);
-    }
-
-    await fillTournamentSelects();
-  } catch (error) {
-    console.error("loadTournaments:", error);
-    container.textContent =
-      "Tournament লোড হয়নি। Firestore Rules ও createdAt পরীক্ষা করো।";
-  }
-}
-
-async function fillTournamentSelects() {
-  for (const id of ["roomTournament", "resultTournament"]) {
-    const select = $("#" + id);
-    if (!select) continue;
-
-    select.replaceChildren();
-
-    const firstOption = document.createElement("option");
-    firstOption.value = "";
-    firstOption.textContent = "Tournament নির্বাচন করো";
-    select.append(firstOption);
-
-    for (const t of tournamentsCache) {
-      const option = document.createElement("option");
-      option.value = t.id;
-      option.textContent = t.title || "Tournament";
-      select.append(option);
-    }
-  }
-}
-
-// ---------- Join Modal ----------
-
-function openJoinModal(tournament) {
-  if (!currentUser) {
-    toast("Join করতে আগে Login করো।");
-    setAuthMode("login");
-    return;
-  }
-
-  selectedTournament = tournament;
-
-  const modal = $("#joinModal");
-  if ($("#joinTitle")) {
-    $("#joinTitle").textContent = tournament.title || "Join Tournament";
-  }
-
-  if (modal) modal.hidden = false;
-}
-
-$("#joinClose")?.addEventListener("click", () => {
-  $("#joinModal").hidden = true;
-});
-
-$("#joinForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!currentUser || !selectedTournament) {
-    toast("আগে Login করে Tournament নির্বাচন করো।");
-    return;
-  }
-
-  const ign = value("ign");
-  const ffuid = value("ffuid");
-  const teamName = value("teamName");
-
-  if (!/^[0-9]{5,20}$/.test(ffuid)) {
-    toast("সঠিক Free Fire UID দাও।");
-    return;
-  }
-
-  try {
-    const id = `${currentUser.uid}_${selectedTournament.id}`;
-    const ref = doc(db, "registrations", id);
-    const existing = await getDoc(ref);
-
-    if (existing.exists()) {
-      toast("তুমি ইতিমধ্যে Join করেছ।");
-      return;
-    }
-
-    await setDoc(ref, {
-      uid: currentUser.uid,
-      userId: currentUser.uid,
-      tournamentId: selectedTournament.id,
-      tournamentName: selectedTournament.title || "Tournament",
-      ign,
-      ffuid,
-      teamName,
-      status: "joined",
-      createdAt: serverTimestamp()
-    });
-
-    $("#joinModal").hidden = true;
-    $("#joinForm").reset();
-
-    toast("Tournament-এ Join সফল হয়েছে।");
-    await loadRooms();
-    await loadAdminData();
-  } catch (error) {
-    console.error("Join:", error);
-    toast("Join করা যায়নি: " + error.message);
-  }
-});
-
-// ---------- Room Details ----------
-
-async function loadRooms() {
-  const container = $("#roomList");
-  if (!container) return;
-
-  if (!currentUser) {
-    container.textContent = "Room দেখতে Login করো।";
-    return;
-  }
-
-  try {
-    const registrations = await getDocs(
-      query(
-        collection(db, "registrations"),
-        where("uid", "==", currentUser.uid)
-      )
-    );
-
-    container.replaceChildren();
-
-    if (registrations.empty) {
-      container.textContent = "তুমি এখনো কোনো Tournament-এ Join করোনি।";
-      return;
-    }
-
-    for (const registration of registrations.docs) {
-      const data = registration.data();
-      const roomSnap = await getDoc(
-        doc(db, "roomDetails", data.tournamentId)
-      );
-
-      const card = document.createElement("article");
-      card.className = "room-card";
-
-      const heading = document.createElement("h3");
-      heading.textContent = data.tournamentName || "Tournament";
-
-      const room = document.createElement("p");
-      const roomData = roomSnap.exists() ? roomSnap.data() : {};
-      room.textContent = "Room ID: " +
-        (roomData.roomId || "এখনো প্রকাশিত হয়নি");
-
-      const pass = document.createElement("p");
-      pass.textContent = "Room Password: " +
-        (roomData.roomPassword || "এখনো প্রকাশিত হয়নি");
-
-      card.append(heading, room, pass);
-      container.append(card);
-    }
-  } catch (error) {
-    console.error("loadRooms:", error);
-    container.textContent =
-      "Room লোড হয়নি। Firestore Rules পরীক্ষা করো।";
-  }
-}
-
-// ---------- Admin: Create Tournament ----------
-
-$("#tournamentForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  try {
-    if (!(await requireAdmin())) return;
-
-    const title = value("tTitle");
-    const mode = value("tMode");
-    const map = value("tMap");
-    const prizeText = value("tPrize");
-    const startTime = value("tStart");
-
-    if (!title || !map || !prizeText || !startTime) {
-      toast("সব Tournament তথ্য পূরণ করো।");
-      return;
-    }
-
-    await addDoc(collection(db, "tournaments"), {
-      title,
-      mode,
-      map,
-      prizeText,
-      startTime,
-      status: "Open",
-      createdAt: serverTimestamp()
-    });
-
-    $("#tournamentForm").reset();
-    toast("Tournament তৈরি হয়েছে।");
-    await loadTournaments();
-  } catch (error) {
-    console.error("Create tournament:", error);
-    toast("Tournament তৈরি হয়নি: " + error.message);
-  }
-});
-
-// ---------- Admin: Publish Room ----------
-
-$("#roomForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  try {
-    if (!(await requireAdmin())) return;
-
-    const tournamentId = value("roomTournament");
-    const roomId = value("roomId");
-    const roomPassword = value("roomPassword");
-
-    if (!tournamentId || !roomId || !roomPassword) {
-      toast("সব Room তথ্য পূরণ করো।");
-      return;
-    }
-
-    await setDoc(doc(db, "roomDetails", tournamentId), {
-      tournamentId,
-      roomId,
-      roomPassword,
-      updatedAt: serverTimestamp()
-    });
-
-    $("#roomForm").reset();
-    toast("Room Details প্রকাশিত হয়েছে।");
-    await loadRooms();
-  } catch (error) {
-    console.error("Save room:", error);
-    toast("Room প্রকাশ হয়নি: " + error.message);
-  }
-});
-
-// ---------- Admin: Publish Result ----------
-
-$("#resultForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  try {
-    if (!(await requireAdmin())) return;
-
-    const tournamentId = value("resultTournament");
-    const tournament = tournamentsCache.find(t => t.id === tournamentId);
-    const winner = value("winner");
-    const description = value("resultDetails");
-
-    if (!tournamentId || !winner) {
-      toast("Tournament ও Winner/Result দাও।");
-      return;
-    }
-
-    await addDoc(collection(db, "results"), {
-      tournamentId,
-      tournamentName: tournament?.title || "Tournament",
-      winner,
-      description,
-      publishedAt: serverTimestamp()
-    });
-
-    $("#resultForm").reset();
-    toast("Result প্রকাশিত হয়েছে।");
-    await loadResults();
-  } catch (error) {
-    console.error("Publish result:", error);
-    toast("Result প্রকাশ হয়নি: " + error.message);
-  }
-});
-
-// ---------- Results ----------
-
-async function loadResults() {
-  const body = $("#resultsList");
-  if (!body) return;
-
-  try {
-    const snap = await getDocs(
-      query(collection(db, "results"), orderBy("publishedAt", "desc"))
-    );
-
-    body.replaceChildren();
-
-    if (snap.empty) {
-      const row = body.insertRow();
-      row.insertCell().colSpan = 3;
-      row.cells[0].textContent = "এখনো কোনো Result নেই।";
-      return;
-    }
-
-    for (const item of snap.docs) {
-      const data = item.data();
-      const row = body.insertRow();
-
-      row.insertCell().textContent = data.tournamentName || "Tournament";
-      row.insertCell().textContent =
-        [data.winner, data.description].filter(Boolean).join(" — ");
-
-      const date = data.publishedAt?.toDate?.();
-      row.insertCell().textContent =
-        date ? date.toLocaleString("bn-BD") : "—";
-    }
-  } catch (error) {
-    console.error("loadResults:", error);
-    body.textContent = "Result লোড করা যায়নি।";
-  }
-}
-
-// ---------- Admin: Registrations ----------
-
-async function loadAdminData() {
-  const body = $("#registrationsList");
-  if (!body || !currentUser) return;
-
-  try {
-    if (!(await requireAdmin())) return;
-
-    const snap = await getDocs(collection(db, "registrations"));
-    body.replaceChildren();
-
-    if (snap.empty) {
-      const row = body.insertRow();
-      row.insertCell().colSpan = 4;
-      row.cells[0].textContent = "এখনো কোনো Registration নেই।";
-      return;
-    }
-
-    for (const item of snap.docs) {
-      const data = item.data();
-      const row = body.insertRow();
-
-      row.insertCell().textContent = data.uid || "—";
-      row.insertCell().textContent = data.ign || "—";
-      row.insertCell().textContent = data.ffuid || "—";
-      row.insertCell().textContent =
-        data.tournamentName || data.tournamentId || "—";
-    }
-  } catch (error) {
-    console.error("Admin registrations:", error);
-    body.textContent = "Registration লোড করা যায়নি।";
-  }
-}
-
-// ---------- Demo Wallet Display ----------
-
-async function loadDemoWallet() {
-  const balance = $("#demoBalance");
-  if (!balance) return;
-
-  if (!currentUser) {
-    balance.textContent = "Login করো";
-    return;
-  }
-
-  try {
-    const snap = await getDoc(doc(db, "demoWallet", currentUser.uid));
-
-    balance.textContent = snap.exists()
-      ? money(snap.data().balance) + " (Demo)"
-      : money(0) + " (Demo)";
-  } catch (error) {
-    console.error("Demo Wallet:", error);
-    balance.textContent = "Demo Balance লোড হয়নি";
-  }
-}
-
-// ---------- Admin Demo Wallet Controls ----------
-
-function setupDemoWalletControls() {
-  const uidInput = $("#walletUid");
-  const amountInput = $("#walletAmount");
-  const result = $("#walletResult");
-
-  async function changeBalance(direction) {
-    try {
-      if (!(await requireAdmin())) return;
-
-      const uid = uidInput?.value.trim() || "";
-      const amount = Number(amountInput?.value);
-
-      if (!uid || !Number.isFinite(amount) || amount <= 0) {
-        toast("সঠিক UID ও Amount দাও।");
-        return;
-      }
-
-      if (amount > 1000000) {
-        toast("Demo Amount সীমার বাইরে।");
-        return;
-      }
-
-      const ref = doc(db, "demoWallet", uid);
-
-      await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(ref);
-        const oldBalance = snap.exists()
-          ? Number(snap.data().balance || 0)
-          : 0;
-
-        if (!snap.exists() && direction < 0) {
-          throw new Error("Wallet নেই; Balance কমানো যাবে না।");
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#06101d">
+<title>PlayX FF Tournament</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#">
+    <span>Play<span class="blue">X</span></span>
+    <small>FF TOURNAMENT</small>
+  </a>
+
+  <button id="menuBtn" class="menu-btn" type="button">☰</button>
+
+  <nav id="nav">
+    <a href="#tournaments">Tournaments</a>
+    <a href="#rooms">My Room</a>
+    <a href="#results">Results</a>
+
+    <a href="#demo-payment" class="btn wallet-btn">
+      👛 Wallet
+    </a>
+
+    <button id="loginBtn" class="btn ghost" type="button">Login</button>
+    <button id="registerBtn" class="btn" type="button">Register</button>
+    <button id="logoutBtn" class="btn ghost" type="button" hidden>Logout</button>
+  </nav>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">PLAY • COMPETE • WIN</p>
+      <h1>PlayX <span class="blue">FF</span><br>
+      <span class="yellow">TOURNAMENT</span></h1>
+      <p class="lead">তোমার স্কিল দেখাও। টুর্নামেন্টে যোগ দাও, fair play করো!</p>
+
+      <div class="actions">
+        <a class="btn" href="#tournaments">টুর্নামেন্ট দেখো</a>
+        <a class="btn ghost" href="#how">কীভাবে খেলবে</a>
+      </div>
+
+      <div class="stats">
+        <div><b>Free Entry</b><small>ডেমো টুর্নামেন্ট</small></div>
+        <div><b>Mobile Friendly</b><small>ফোনে ব্যবহারযোগ্য</small></div>
+        <div><b>Fair Play</b><small>সবার জন্য</small></div>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <div class="ring"></div>
+      <div class="crosshair">✦</div>
+      <div class="art-title">YOUR<br><span>GAME.</span><br>YOUR GLORY.</div>
+      <div class="art-chip">PLAYX ARENA</div>
+    </div>
+  </section>
+
+  <section class="section" id="account">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">YOUR ACCOUNT</p>
+        <h2 id="accountTitle">Welcome to PlayX</h2>
+      </div>
+      <span id="userStatus" class="muted">লগইন করা হয়নি</span>
+    </div>
+
+    <div class="panel">
+      <form id="authForm" class="form-grid">
+        <label id="displayNameWrap">নাম
+          <input id="displayName" autocomplete="name" placeholder="তোমার নাম">
+        </label>
+
+        <label>Email
+          <input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
+        </label>
+
+        <label>Password
+          <input id="password" type="password" autocomplete="current-password" minlength="6" required placeholder="কমপক্ষে ৬ অক্ষর">
+        </label>
+
+        <button class="btn" id="authSubmit" type="submit">Register</button>
+        <p class="muted tiny" id="authMessage">অ্যাকাউন্ট তৈরি বা লগইন করতে Firebase config সেট করো।</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="section" id="tournaments">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">FIND YOUR MATCH</p>
+        <h2>চলমান টুর্নামেন্ট</h2>
+      </div>
+      <span class="muted">Live database</span>
+    </div>
+    <div class="cards" id="tournamentList">
+      <p class="muted">Firebase থেকে টুর্নামেন্ট লোড হচ্ছে…</p>
+    </div>
+  </section>
+
+  <section class="section split" id="rooms">
+    <div class="panel">
+      <p class="eyebrow">MATCH ROOM</p>
+      <h2>আমার Room Details</h2>
+      <p class="muted">তুমি যে টুর্নামেন্টে নিবন্ধিত, অ্যাডমিন রুম তথ্য প্রকাশ করলে এখানে দেখা যাবে।</p>
+      <div id="roomList">
+        <p class="muted">লগইন করে নিবন্ধিত টুর্নামেন্ট দেখো।</p>
+      </div>
+    </div>
+
+    <div class="panel" id="how">
+      <p class="eyebrow">HOW TO JOIN</p>
+      <h2>৩টি ধাপ</h2>
+
+      <div class="step">
+        <span>01</span>
+        <div><b>অ্যাকাউন্ট তৈরি করো</b><p>ইমেইল ও পাসওয়ার্ড দিয়ে রেজিস্টার করো।</p></div>
+      </div>
+
+      <div class="step">
+        <span>02</span>
+        <div><b>টুর্নামেন্টে Join করো</b><p>তোমার ইন-গেম নাম ও UID দাও।</p></div>
+      </div>
+
+      <div class="step">
+        <span>03</span>
+        <div><b>Room details দেখো</b><p>প্রকাশের পর অনুমোদিত প্লেয়াররা রুম তথ্য দেখতে পারবে।</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="results">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">MATCH HISTORY</p>
+        <h2>ফলাফল</h2>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>টুর্নামেন্ট</th><th>বিজয়ী / ফলাফল</th><th>প্রকাশ</th></tr>
+        </thead>
+        <tbody id="resultsList">
+          <tr><td colspan="3">লোড হচ্ছে…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Demo Wallet: এটি বাস্তব পেমেন্ট ব্যবস্থা নয় -->
+  <section class="section panel" id="demo-payment">
+    <p class="eyebrow"> WALLET</p>
+    <h2>👛 My Wallet</h2>
+    <div class="panel demo-balance">
+      <p class="muted">আমার Demo Balance</p>
+      <h2 id="demoBalance">৳0.00</h2>
+      <p class="muted tiny">
+        এটি পরীক্ষামূলক ব্যালেন্স, বাস্তব অর্থ নয়।
+      </p>
+    </div>
+    
+
+    <p class="muted">
+      PLAYX FF TOURNAMENT পেমেন্ট সম্পন্ন করুন 01346022330 Send Money করুন, তারপর নিজের একাউন্ট নাম্বার ও TrxID সাবমিট করুন।
+    </p>
+
+    <form id="demo-payment-form" class="form-grid">
+      <label for="method"> Payment Method
+        <select id="method" required>
+          <option value="bkash">bKash (01346022330)</option>
+          <option value="nagad">Nagad (01346022330)</option>
+        </select>
+      </label>
+
+      <label for="amount"> Amount
+        <input type="number" id="amount" min="1" max="10000" step="1" required>
+      </label>
+
+      <label for="txid"> Transaction ID
+        <input type="text" id="txid" maxlength="80" required placeholder="">
+      </label>
+
+      <button class="btn" type="submit">Submit Request</button>
+      <p id="payment-message" class="muted tiny" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <!-- Admin Panel -->
+  <section class="section panel" id="adminPanel" hidden>
+    <p class="eyebrow">ADMIN ONLY</p>
+    <h2>Admin Panel</h2>
+    <p class="muted">এখান থেকে টুর্নামেন্ট তৈরি এবং ফলাফল প্রকাশ করা যাবে। Room ID/password শুধুমাত্র নিবন্ধিত প্লেয়ারদের জন্য।</p>
+
+    <div class="admin-grid">
+      <form id="tournamentForm">
+        <h3>নতুন Tournament</h3>
+        <label>নাম<input id="tTitle" required maxlength="80" placeholder="যেমন Solo Clash"></label>
+        <label>Mode<select id="tMode"><option>SOLO</option><option>DUO</option><option>SQUAD</option></select></label>
+        <label>Map<input id="tMap" required maxlength="40" placeholder="Bermuda"></label>
+        <label>Prize pool (text)<input id="tPrize" required maxlength="40" placeholder="Free tournament"></label>
+        <label>Start time<input id="tStart" type="datetime-local" required></label>
+        <button class="btn" type="submit">Tournament তৈরি</button>
+      </form>
+
+      <form id="roomForm">
+        <h3>Room প্রকাশ</h3>
+        <label>Tournament<select id="roomTournament" required></select></label>
+        <label>Room ID<input id="roomId" required maxlength="40"></label>
+        <label>Room Password<input id="roomPassword" required maxlength="80"></label>
+        <button class="btn" type="submit">Room details সংরক্ষণ</button>
+      </form>
+
+      <form id="resultForm">
+        <h3>Result প্রকাশ</h3>
+        <label>Tournament<select id="resultTournament" required></select></label>
+        <label>Winner / Result<input id="winner" required maxlength="120"></label>
+        <label>Details<input id="resultDetails" maxlength="300" placeholder="ঐচ্ছিক"></label>
+        <button class="btn" type="submit">Result প্রকাশ</button>
+      </form>
+    <!-- Demo Wallet Admin Control -->
+    <div class="admin-grid">
+      <form id="demoWalletForm">
+        <h3>Demo Balance Control</h3>
+
+        <p class="muted">
+          শুধু অনুমোদিত Admin Demo Balance পরিচালনা করতে পারবেন।
+        </p>
+
+        <label for="walletUid">
+          User UID
+          <input
+            id="walletUid"
+            type="text"
+            placeholder="Firebase User UID"
+            required
+          >
+        </label>
+
+        <label for="walletAmount">
+          Amount (Demo টাকা)
+          <input
+            id="walletAmount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="যেমন 100"
+            required
+          >
+        </label>
+
+        <button class="btn" id="walletCheck" type="button">
+          Balance দেখুন
+        </button>
+
+        <button class="btn" id="walletAdd" type="button">
+          Demo Balance যোগ করুন
+        </button>
+
+        <button class="btn" id="walletSubtract" type="button">
+          Demo Balance কমান
+        </button>
+
+        <p id="walletResult" class="muted" role="status"></p>
+      </form>
+    </div>
+    <!-- End Demo Wallet Admin Control -->
+    </div>
+
+    <h3>Registrations</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Player</th><th>In-game name</th><th>UID</th><th>Tournament ID</th></tr>
+        </thead>
+        <tbody id="registrationsList">
+          <tr><td colspan="4">লোড হচ্ছে…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- নতুন অংশ: Demo Wallet Requests -->
+    <h3>Demo Wallet Requests</h3>
+    <p class="muted">
+      পরীক্ষামূলক Request তালিকা। এখানে কোনো বাস্তব পেমেন্ট যাচাই,
+      অনুমোদন বা Wallet Balance পরিবর্তন করা হয় না।
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>User UID</th>
+            <th>Method</th>
+            <th>Amount (Demo)</th>
+            <th>Transaction ID (Demo)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="demoPaymentRequestsList">
+          <tr>
+            <td colspan="6">Request লোড করার ব্যবস্থা এখনো যুক্ত করা হয়নি।</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <a class="brand" href="#">
+    <span>Play<span class="blue">X</span></span>
+    <small>FF TOURNAMENT</small>
+  </a>
+  <p>Fan-made community platform concept. Not affiliated with Garena or Free Fire.</p>
+</footer>
+
+<div class="modal-backdrop" id="joinModal" hidden>
+  <section class="modal" role="dialog" aria-modal="true">
+    <button class="close" id="joinClose" type="button">×</button>
+    <p class="eyebrow">TOURNAMENT REGISTRATION</p>
+    <h2 id="joinTitle">Join Tournament</h2>
+
+    <form id="joinForm">
+      <label>In-game name<input id="ign" required maxlength="40"></label>
+      <label>Free Fire UID<input id="ffuid" required inputmode="numeric" pattern="[0-9]{5,20}" title="৫–২০ সংখ্যার UID" maxlength="20"></label>
+      <label>Team name (DUO/SQUAD হলে)<input id="teamName" maxlength="50"></label>
+      <button class="btn full" type="submit">Confirm Join</button>
+    </form>
+  </section>
+</div>
+
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
+
         }
-
-        const newBalance = oldBalance + direction * amount;
-
-        if (!Number.isFinite(newBalance) || newBalance < 0) {
-          throw new Error("Demo Balance শূন্যের নিচে হতে পারবে না।");
-        }
-
-        transaction.set(ref, {
-          uid,
-          balance: newBalance,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
       });
-
-      if (result) result.textContent = "Demo Balance আপডেট হয়েছে।";
-      toast("Demo Balance আপডেট হয়েছে।");
-      await loadDemoWallet();
-    } catch (error) {
-      console.error("Wallet update:", error);
-      if (result) result.textContent = error.message;
-      toast(error.message || "Demo Wallet আপডেট হয়নি।");
-    }
-  }
-
-  $("#walletCheck")?.addEventListener("click", async () => {
-    try {
-      if (!(await requireAdmin())) return;
-
-      const uid = uidInput?.value.trim() || "";
-      if (!uid) {
-        toast("User UID দাও।");
-        return;
-      }
-
-      const snap = await getDoc(doc(db, "demoWallet", uid));
-
-      if (result) {
-        result.textContent = snap.exists()
-          ? "Demo Balance: " + money(snap.data().balance)
-          : "এই UID-এর Demo Wallet নেই।";
-      }
-    } catch (error) {
-      toast(error.message);
     }
   });
-
-  $("#walletAdd")?.addEventListener("click", () => changeBalance(1));
-  $("#walletSubtract")?.addEventListener("click", () => changeBalance(-1));
-}
-
-setupDemoWalletControls();
-
-// ---------- Demo Payment Request ----------
-// এটি শুধু পরীক্ষামূলক Request জমা করে।
-// এটি কোনো পেমেন্ট যাচাই করে না এবং Balance বাড়ায় না।
-
-$("#demo-payment-form")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const message = $("#payment-message");
-
-  try {
-    if (!currentUser) {
-      throw new Error("Request জমা দিতে আগে Login করো।");
-    }
-
-    const method = value("method");
-    const amount = Number(value("amount"));
-    const txid = value("txid");
-
-    if (!Number.isFinite(amount) || amount < 1 || amount > 10000) {
-      throw new Error("Demo Amount ১ থেকে ১০,০০০-এর মধ্যে হতে হবে।");
-    }
-
-    if (!txid || txid.length > 80) {
-      throw new Error("Demo Transaction ID দাও।");
-    }
-
-    await addDoc(collection(db, "demoPaymentRequests"), {
-      uid: currentUser.uid,
-      method,
-      amount,
-      transactionId: txid,
-      status: "demo-pending",
-      createdAt: serverTimestamp()
-    });
-
-    if (message) {
-      message.textContent =
-        "Demo Request জমা হয়েছে। কোনো বাস্তব পেমেন্ট বা Balance পরিবর্তন হয়নি।";
-    }
-
-    $("#demo-payment-form").reset();
-  } catch (error) {
-    console.error("Demo Request:", error);
-    if (message) message.textContent = error.message;
-  }
 });
-
-// ---------- Admin: Demo Requests ----------
-
-async function loadDemoPaymentRequests() {
-  const body = $("#demoPaymentRequestsList");
-  if (!body || !currentUser) return;
-
-  try {
-    if (!(await requireAdmin())) return;
-
-    const snap = await getDocs(
-      query(
-        collection(db, "demoPaymentRequests"),
-        orderBy("createdAt", "desc")
-      )
-    );
-
-    body.replaceChildren();
-
-    if (snap.empty) {
-      const row = body.insertRow();
-      row.insertCell().colSpan = 6;
-      row.cells[0].textContent = "কোনো Demo Request নেই।";
-      return;
-    }
-
-    for (const item of snap.docs) {
-      const data = item.data();
-      const row = body.insertRow();
-
-      row.insertCell().textContent = item.id;
-      row.insertCell().textContent = data.uid || "—";
-      row.insertCell().textContent = data.method || "—";
-      row.insertCell().textContent = money(data.amount);
-      row.insertCell().textContent = data.transactionId || "—";
-      row.insertCell().textContent = data.status || "—";
-    }
-  } catch (error) {
-    console.error("Demo requests:", error);
-    body.textContent = "Demo Requests লোড করা যায়নি।";
-  }
-}
-
-// ---------- Mobile Menu ----------
-
-$("#menuBtn")?.addEventListener("click", () => {
-  $("#nav")?.classList.toggle("open");
-});
-
-// ---------- Startup ----------
-
-setAuthMode("register");
-
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-
-  let admin = false;
-
-  if (user) {
-    try {
-      admin = isAdmin(await user.getIdTokenResult(true));
-    } catch (error) {
-      console.error("Admin claim:", error);
-    }
-  }
-
-  updateUserUI(user, admin);
-
-  await loadTournaments();
-  await loadResults();
-  await loadRooms();
-  await loadDemoWallet();
-
-  if (user && admin) {
-    await loadAdminData();
-    await loadDemoPaymentRequests();
-  }
-});
+</script>
+</body>
+        </html>
+        
